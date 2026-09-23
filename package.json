@@ -1,0 +1,10 @@
+{
+  "name": "shelby-seller-shop",
+  "private": true,
+  "version": "1.0.0",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
+  }
+}

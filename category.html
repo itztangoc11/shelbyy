@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loading... — Shelby Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#070710;--card:#0f0f26;--card2:#14143a;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+    --pink:#f0469a;--pink2:#ff6bb5;--purple:#7c3aed;--purple2:#a78bfa;
+    --text:#eeeef8;--muted:#7070a0;--muted2:#9090c0;
+    --green:#22c55e;--yellow:#f59e0b;--cyan:#06b6d4;
+    --grad:linear-gradient(135deg,#f0469a,#7c3aed);
+  }
+  html{scroll-behavior:smooth;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+  /* BG */
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(ellipse 70% 50% at 15% 0%,rgba(240,70,154,0.09),transparent 60%),
+               radial-gradient(ellipse 60% 50% at 85% 100%,rgba(124,58,237,0.09),transparent 60%);}
+
+  /* HEADER */
+  .hdr{position:sticky;top:0;z-index:100;background:rgba(7,7,16,0.9);backdrop-filter:blur(20px);
+    border-bottom:1px solid var(--border);padding:0 24px;height:60px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;}
+  .hdr-logo{font-size:18px;font-weight:900;background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;display:flex;align-items:center;gap:8px;text-decoration:none;}
+  .hdr-back{display:flex;align-items:center;gap:7px;color:var(--muted2);font-size:13px;font-weight:600;text-decoration:none;transition:color .2s;padding:8px 14px;border-radius:10px;border:1px solid var(--border2);background:rgba(255,255,255,0.03);}
+  .hdr-back:hover{color:var(--pink);border-color:rgba(240,70,154,0.3);}
+
+  /* MAIN */
+  .page{max-width:960px;margin:0 auto;padding:32px 20px 80px;position:relative;z-index:1;}
+
+  /* SKELETON */
+  .skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.08) 50%,rgba(255,255,255,0.04) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:12px;}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+
+  /* LAYOUT */
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start;}
+  @media(max-width:680px){.detail-grid{grid-template-columns:1fr;}}
+
+  /* SLIDESHOW */
+  .slideshow-wrap{position:relative;border-radius:20px;overflow:hidden;background:#000;border:1px solid var(--border);aspect-ratio:4/3;}
+  .slide{display:none;width:100%;height:100%;}
+  .slide.active{display:block;}
+  .slide img{width:100%;height:100%;object-fit:contain;display:block;background:#000;}
+  .slide-prev,.slide-next{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:50%;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;z-index:5;}
+  .slide-prev{left:12px;}.slide-next{right:12px;}
+  .slide-prev:hover,.slide-next:hover{background:rgba(240,70,154,0.5);border-color:var(--pink);}
+  .slide-dots{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:5;}
+  .sdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;transition:all .2s;}
+  .sdot.active{background:var(--pink);transform:scale(1.3);}
+  .slide-counter{position:absolute;top:12px;right:12px;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);color:var(--muted2);font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);}
+
+  /* INFO SIDE */
+  .cat-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(240,70,154,0.1);border:1px solid rgba(240,70,154,0.2);color:var(--pink);font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;margin-bottom:16px;}
+  .cat-title{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1.15;margin-bottom:16px;}
+  @media(max-width:480px){.cat-title{font-size:26px;}}
+
+  /* PRICE BOX */
+  .price-box{background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:20px;margin-bottom:20px;position:relative;overflow:hidden;}
+  .price-box::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);}
+  .price-row{display:flex;gap:16px;margin-bottom:16px;}
+  .price-item{flex:1;text-align:center;}
+  .price-item .lbl{font-size:10px;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+  .price-item .val{font-size:28px;font-weight:900;color:var(--green);}
+  .price-item .val.usd{color:var(--cyan);}
+
+  /* ORDER BUTTON */
+  .btn-order{width:100%;padding:17px;background:var(--grad);border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;text-decoration:none;transition:transform .2s,box-shadow .2s;box-shadow:0 6px 28px rgba(240,70,154,0.4);letter-spacing:.2px;margin-bottom:10px;}
+  .btn-order:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(240,70,154,0.55);}
+  .btn-order:active{transform:none;}
+  .btn-tg{width:100%;padding:13px;background:rgba(34,158,217,0.1);border:1px solid rgba(34,158,217,0.25);border-radius:14px;color:#229ed9;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:9px;text-decoration:none;transition:all .2s;}
+  .btn-tg:hover{background:rgba(34,158,217,0.2);}
+
+  /* TRUST ROW */
+  .trust-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+  .trust-chip{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--muted2);background:rgba(255,255,255,0.03);border:1px solid var(--border2);padding:5px 12px;border-radius:20px;}
+  .trust-chip i{color:var(--green);}
+
+  /* SECTIONS */
+  .info-section{margin-top:28px;}
+  .info-section-title{display:flex;align-items:center;gap:10px;font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;}
+  .info-section-title::after{content:'';flex:1;height:1px;background:var(--border2);}
+  .creators-text{font-size:14px;color:var(--muted2);line-height:1.7;}
+  .features-list{display:flex;flex-direction:column;gap:8px;}
+  .feature-item{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text);}
+  .feature-item i{color:var(--green);font-size:12px;flex-shrink:0;}
+  .platforms-text{font-size:13px;color:var(--muted2);line-height:1.7;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:12px;padding:14px 16px;}
+
+  /* RELATED */
+  .related-section{margin-top:48px;}
+  .related-section h3{font-size:20px;font-weight:900;margin-bottom:20px;}
+  .related-section h3 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .related-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+  .rel-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;transition:transform .2s,border-color .2s;text-decoration:none;color:var(--text);display:block;}
+  .rel-card:hover{transform:translateY(-4px);border-color:rgba(240,70,154,0.3);}
+  .rel-thumb{height:130px;overflow:hidden;background:#0a0a20;}
+  .rel-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .3s;}
+  .rel-card:hover .rel-thumb img{transform:scale(1.06);}
+  .rel-body{padding:12px;}
+  .rel-name{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+  .rel-price{font-size:12px;color:var(--green);font-weight:700;}
+
+  /* NOT FOUND */
+  .not-found{text-align:center;padding:80px 20px;}
+  .not-found i{font-size:48px;color:var(--muted);opacity:.3;display:block;margin-bottom:20px;}
+  .not-found h2{font-size:24px;font-weight:800;margin-bottom:10px;}
+  .not-found p{color:var(--muted2);font-size:14px;}
+
+  /* LOADING STATE */
+  #loadingState{padding:40px 0;}
+
+  /* ── LIGHTBOX ── */
+  .lb-overlay{
+    position:fixed;inset:0;z-index:9999;
+    background:rgba(0,0,0,0.95);backdrop-filter:blur(16px);
+    display:none;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .lb-overlay.open{display:flex;}
+  .lb-img-wrap{
+    position:relative;max-width:90vw;max-height:88vh;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .lb-img-wrap img{
+    max-width:100%;max-height:88vh;border-radius:16px;
+    display:block;object-fit:contain;
+    box-shadow:0 32px 80px rgba(0,0,0,0.8);
+    user-select:none;
+    transition:opacity .25s ease;
+  }
+  .lb-img-wrap img.fading{opacity:0;}
+  .lb-img-wrap video{
+    max-width:100%;max-height:88vh;border-radius:16px;
+    display:block;
+    box-shadow:0 32px 80px rgba(0,0,0,0.8);
+    transition:opacity .25s ease;
+    background:#000;
+  }
+  .lb-close{
+    position:fixed;top:20px;right:20px;
+    width:42px;height:42px;border-radius:50%;
+    background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+    color:#fff;font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s;z-index:10;
+  }
+  .lb-close:hover{background:rgba(239,68,68,0.5);border-color:rgba(239,68,68,0.6);}
+  .lb-arrow{
+    position:fixed;top:50%;transform:translateY(-50%);
+    width:48px;height:48px;border-radius:50%;
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+    color:#fff;font-size:18px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:all .2s;z-index:10;
+  }
+  .lb-arrow:hover{background:rgba(240,70,154,0.4);border-color:rgba(240,70,154,0.5);}
+  .lb-arrow.prev{left:16px;}
+  .lb-arrow.next{right:16px;}
+  .lb-counter{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);
+    color:rgba(255,255,255,0.8);font-size:13px;font-weight:700;
+    padding:6px 18px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);
+    z-index:10;display:flex;align-items:center;gap:10px;
+  }
+  .lb-dots-row{display:flex;gap:6px;align-items:center;}
+  .lb-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.3);cursor:pointer;transition:all .2s;}
+  .lb-dot.active{background:var(--pink);transform:scale(1.4);}
+  /* Cursor pointer on slideshow */
+  .slideshow-wrap{cursor:zoom-in;}
+
+  /* Tap hint */
+  .tap-hint{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:600;color:var(--muted2);
+    background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+    padding:5px 12px;border-radius:20px;margin-bottom:10px;
+    user-select:none;
+  }
+  .tap-hint i{color:var(--pink);font-size:11px;}
+
+  /* ── VIDEO SLIDE ── */
+  .slide-video-wrap{position:relative;width:100%;height:100%;background:#000;}
+  .slide-video-wrap video{width:100%;height:100%;object-fit:contain;display:block;background:#000;}
+
+  /* Play overlay — shown when video is paused */
+  .vid-play-overlay{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(0,0,0,0.35);
+    cursor:pointer;transition:background .2s;
+    z-index:3;
+  }
+  .vid-play-overlay:hover{background:rgba(0,0,0,0.5);}
+  .vid-play-overlay .play-btn-circle{
+    width:60px;height:60px;border-radius:50%;
+    background:rgba(240,70,154,0.9);
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;color:#fff;
+    box-shadow:0 4px 24px rgba(240,70,154,0.6);
+    transition:transform .15s;
+  }
+  .vid-play-overlay:hover .play-btn-circle{transform:scale(1.1);}
+  .vid-play-overlay.hidden{display:none;}
+
+  /* Mute/Unmute button — bottom-right of video */
+  .vid-mute-btn{
+    position:absolute;bottom:48px;right:12px;z-index:5;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,0.2);
+    color:#fff;font-size:14px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:background .2s;
+  }
+  .vid-mute-btn:hover{background:rgba(240,70,154,0.7);}
+
+  /* Progress bar below video */
+  .vid-progress{
+    position:absolute;bottom:0;left:0;right:0;height:3px;
+    background:rgba(255,255,255,0.15);z-index:4;
+    cursor:pointer;
+  }
+  .vid-progress-fill{height:100%;background:var(--pink);width:0%;transition:none;}
+  </style>
+</head>
+<body>
+
+<header class="hdr">
+  <a href="index.html" class="hdr-back"><i class="fa-solid fa-arrow-left"></i> Back to Store</a>
+  <a href="index.html" class="hdr-logo"><i class="fa-solid fa-fire-flame-curved"></i> Shelby Shop</a>
+</header>
+
+<main class="page">
+  <!-- Loading skeleton -->
+  <div id="loadingState">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;">
+      <div class="skeleton" style="aspect-ratio:4/3;border-radius:20px;"></div>
+      <div style="display:flex;flex-direction:column;gap:14px;padding-top:10px;">
+        <div class="skeleton" style="height:20px;width:40%;border-radius:8px;"></div>
+        <div class="skeleton" style="height:44px;width:80%;border-radius:8px;"></div>
+        <div class="skeleton" style="height:90px;border-radius:12px;"></div>
+        <div class="skeleton" style="height:52px;border-radius:14px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actual content -->
+  <div id="catContent" style="display:none;"></div>
+
+  <!-- Not found -->
+  <div id="notFound" style="display:none;" class="not-found">
+    <i class="fa-solid fa-box-open"></i>
+    <h2>Category Not Found</h2>
+    <p>This category doesn't exist or may have been removed.</p>
+    <a href="index.html" style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:var(--grad);color:#fff;padding:12px 24px;border-radius:12px;font-weight:700;text-decoration:none;">
+      <i class="fa-solid fa-house"></i> Go Back Home
+    </a>
+  </div>
+</main>
+
+<!-- ── LIGHTBOX ── -->
+<div class="lb-overlay" id="lbOverlay">
+  <button class="lb-close" id="lbClose"><i class="fa-solid fa-xmark"></i></button>
+  <button class="lb-arrow prev" id="lbPrev"><i class="fa-solid fa-chevron-left"></i></button>
+  <div class="lb-img-wrap">
+    <img id="lbImg" src="" alt="" style="display:none"/>
+    <video id="lbVideo" controls playsinline style="display:none"></video>
+  </div>
+  <button class="lb-arrow next" id="lbNext"><i class="fa-solid fa-chevron-right"></i></button>
+  <div class="lb-counter">
+    <span id="lbCounterText">1 / 1</span>
+    <div class="lb-dots-row" id="lbDotsRow"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBDZJYC-6TgWNb-WJWUhFb9Yg_qSVUp-KQ",
+    authDomain: "shelby-3ef50.firebaseapp.com",
+    databaseURL: "https://shelby-3ef50-default-rtdb.firebaseio.com/",
+    projectId: "shelby-3ef50",
+    storageBucket: "shelby-3ef50.firebasestorage.app",
+    messagingSenderId: "244378758231",
+    appId: "1:244378758231:web:fe2d082e6028b82c060712",
+    measurementId: "G-9FVL4MNB9M"
+  };
+
+
+const app = initializeApp(firebaseConfig, 'cat-page');
+const db  = getDatabase(app);
+
+function toSlug(str) {
+  return str.toLowerCase().replace(/[^a-z0-9\s-]/g,'').trim().replace(/\s+/g,'-');
+}
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Get slug from URL: category.html?slug=mom-son
+const params = new URLSearchParams(window.location.search);
+const slugParam = params.get('slug') || '';
+
+async function loadCategory() {
+  try {
+    const snap = await get(ref(db, 'products'));
+    if (!snap.exists()) { showNotFound(); return; }
+
+    const products = Object.values(snap.val());
+    // Match by slug
+    const prod = products.find(p => toSlug(p.title || '') === slugParam);
+    if (!prod) { showNotFound(); return; }
+
+    // Update page title + meta
+    document.title = prod.title + ' — Shelby Shop';
+
+    // Resolve db:// images
+    const imgs = await resolveImages((prod.images||'').split(',').map(s=>s.trim()).filter(Boolean));
+
+    // Render
+    renderCategory(prod, imgs, products);
+
+  } catch(e) {
+    showNotFound();
+    console.error(e);
+  }
+}
+
+async function resolveImages(urls) {
+  const resolved = [];
+  for (const url of urls) {
+    if (url.startsWith('db://')) {
+      try {
+        const key = url.replace('db://','');
+        const response = await fetch('/api/public-media?key='+encodeURIComponent(key));
+        const result = await response.json();
+        if (response.ok && result.data) { resolved.push(result.data); continue; }
+      } catch(e) {}
+    }
+    resolved.push(url);
+  }
+  return resolved.length ? resolved : [''];
+}
+
+function renderCategory(prod, imgs, allProducts) {
+  const inrNum  = prod.priceINR || 0;
+  const usdNum  = prod.priceUSD || 0;
+  const features = (prod.features||'').split(',').map(s=>s.trim()).filter(Boolean);
+  const telegramUrl = 'https://t.me/Saymyn_ame';
+
+  // Slideshow HTML
+  const slidesHTML = imgs.map((src,i) => {
+    const isVid = /\.(mp4|mov|webm|avi)(\?|$)/i.test(src);
+    if (isVid) {
+      return `<div class="slide ${i===0?'active':''} slide-is-video" style="position:relative;" data-video-src="${esc(src)}">
+        <div class="slide-video-wrap">
+          <video src="${esc(src)}" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;" muted playsinline preload="auto" loop></video>
+          <div class="vid-play-overlay">
+            <div class="play-btn-circle"><i class="fa-solid fa-play"></i></div>
+          </div>
+          <button class="vid-mute-btn" title="Unmute"><i class="fa-solid fa-volume-xmark"></i></button>
+          <div class="vid-progress"><div class="vid-progress-fill"></div></div>
+        </div>
+      </div>`;
+    }
+    return `<div class="slide ${i===0?'active':''}" style="position:relative;">
+      <img src="${esc(src)}" alt="${esc(prod.title)}" loading="${i===0?'eager':'lazy'}" style="width:100%;height:100%;object-fit:contain;display:block;background:#000;" onerror="this.style.opacity='0.3'"/>
+    </div>`;
+  }).join('');
+  const dotsHTML = imgs.length > 1
+    ? imgs.map((_,i) => `<span class="sdot ${i===0?'active':''}" data-idx="${i}"></span>`).join('')
+    : '';
+
+  // Related products (excluding current, max 6)
+  const related = allProducts
+    .filter(p => toSlug(p.title||'') !== slugParam)
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 6);
+
+  const relatedHTML = related.map(p => {
+    const thumb = (p.images||'').split(',')[0].trim();
+    const slug  = toSlug(p.title||'');
+    return `<a class="rel-card" href="category.html?slug=${encodeURIComponent(slug)}">
+      <div class="rel-thumb">
+        <img src="${esc(thumb)}" alt="${esc(p.title)}" onerror="this.style.opacity=0.2" loading="lazy"/>
+      </div>
+      <div class="rel-body">
+        <div class="rel-name">${esc(p.title)}</div>
+        <div class="rel-price">₹${p.priceINR||0} / $${p.priceUSD||0}</div>
+      </div>
+    </a>`;
+  }).join('');
+
+  // Payment URL
+  const payUrl = `payment.html?name=${encodeURIComponent(prod.title)}&inr=${encodeURIComponent('₹'+inrNum)}&usd=${encodeURIComponent('$'+usdNum)}`;
+  const tgMsg  = `https://t.me/Saymyn_ame?text=${encodeURIComponent('Hi! I want to order: '+prod.title+' (₹'+inrNum+')')}`;
+
+  document.getElementById('catContent').innerHTML = `
+    <div class="detail-grid">
+
+      <!-- LEFT: Slideshow -->
+      <div>
+        <div class="tap-hint"><i class="fa-solid fa-hand-pointer"></i> Tap on picture to view full screen</div>
+        <div class="slideshow-wrap" id="slideshow">
+          ${slidesHTML}
+          ${imgs.length > 1 ? `
+          <button class="slide-prev" id="slidePrev"><i class="fa-solid fa-chevron-left"></i></button>
+          <button class="slide-next" id="slideNext"><i class="fa-solid fa-chevron-right"></i></button>
+          <div class="slide-dots">${dotsHTML}</div>
+          <div class="slide-counter" id="slideCounter">1 / ${imgs.length}</div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- RIGHT: Info -->
+      <div>
+        <div class="cat-badge">
+          <i class="fa-solid ${esc(prod.badgeIcon||'fa-tag')}"></i> ${esc(prod.badge||'PACK')}
+        </div>
+        <h1 class="cat-title">${esc(prod.title)}</h1>
+
+        <div class="trust-row">
+          <div class="trust-chip"><i class="fa-solid fa-circle-check"></i> No Link Sharing</div>
+          <div class="trust-chip"><i class="fa-solid fa-bolt"></i> Instant Delivery</div>
+          <div class="trust-chip"><i class="fa-solid fa-shield-halved"></i> Trusted Seller</div>
+          <div class="trust-chip"><i class="fa-solid fa-rotate"></i> 24/7 Updates</div>
+        </div>
+
+        <div class="price-box">
+          <div class="price-row">
+            <div class="price-item">
+              <div class="lbl"><i class="fa-solid fa-indian-rupee-sign"></i> Indian Rupee</div>
+              <div class="val">₹${inrNum}</div>
+            </div>
+            <div class="price-item">
+              <div class="lbl"><i class="fa-solid fa-dollar-sign"></i> US Dollar</div>
+              <div class="val usd">$${usdNum}</div>
+            </div>
+          </div>
+          <a href="${esc(payUrl)}" class="btn-order">
+            <i class="fa-solid fa-bag-shopping"></i> Order Now
+          </a>
+          <a href="${esc(tgMsg)}" target="_blank" class="btn-tg">
+            <i class="fa-brands fa-telegram"></i> DM on Telegram
+          </a>
+        </div>
+
+        ${features.length ? `
+        <div class="info-section">
+          <div class="info-section-title"><i class="fa-solid fa-list-check" style="color:var(--green)"></i> What's Included</div>
+          <div class="features-list">
+            ${features.map(f=>`<div class="feature-item"><i class="fa-solid fa-circle-check"></i> ${esc(f)}</div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        ${prod.creators ? `
+        <div class="info-section">
+          <div class="info-section-title"><i class="fa-solid fa-users" style="color:var(--purple2)"></i> Creators & Content</div>
+          <div class="creators-text">${esc(prod.creators)}</div>
+        </div>` : ''}
+
+        ${prod.platforms ? `
+        <div class="info-section">
+          <div class="info-section-title"><i class="fa-solid fa-layer-group" style="color:var(--yellow)"></i> Platforms & Sources</div>
+          <div class="platforms-text">${esc(prod.platforms)}</div>
+        </div>` : ''}
+      </div>
+    </div>
+
+    ${related.length ? `
+    <div class="related-section">
+      <h3>More <span>Categories</span></h3>
+      <div class="related-grid">${relatedHTML}</div>
+    </div>` : ''}
+  `;
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('catContent').style.display   = 'block';
+
+  // Store images globally for lightbox
+  _resolvedImgs = imgs.filter(Boolean);
+
+  // Init slideshow (multiple) or single click-to-lightbox
+  if (imgs.length > 1) {
+    initSlideshow(imgs.length);
+  } else if (imgs.length === 1) {
+    const ss = document.getElementById('slideshow');
+    if (ss) {
+      // If it's a video, init video controls; else lightbox
+      const vid = ss.querySelector('video');
+      if (vid) {
+        initVideoControls(ss.querySelector('.slide-is-video'));
+      } else {
+        ss.addEventListener('click', () => openLightbox(0));
+      }
+    }
+  }
+}
+
+// Resolved images stored globally for lightbox
+let _resolvedImgs = [];
+
+// ── Video Controls for a single slide ──
+function initVideoControls(slide) {
+  if (!slide) return;
+  const vid     = slide.querySelector('video');
+  const overlay = slide.querySelector('.vid-play-overlay');
+  const muteBtn = slide.querySelector('.vid-mute-btn');
+  const progBar = slide.querySelector('.vid-progress-fill');
+  if (!vid) return;
+
+  // Auto-play when slide is active (muted so browser allows it)
+  vid.muted = true;
+  vid.play().catch(()=>{});
+
+  // Overlay click → toggle play/pause
+  overlay.addEventListener('click', e => {
+    e.stopPropagation();
+    if (vid.paused) { vid.play(); } else { vid.pause(); }
+  });
+
+  vid.addEventListener('play',  () => overlay.classList.add('hidden'));
+  vid.addEventListener('pause', () => overlay.classList.remove('hidden'));
+
+  // Mute/unmute button
+  muteBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    vid.muted = !vid.muted;
+    muteBtn.innerHTML = vid.muted
+      ? '<i class="fa-solid fa-volume-xmark"></i>'
+      : '<i class="fa-solid fa-volume-high"></i>';
+  });
+
+  // Progress bar update
+  if (progBar) {
+    vid.addEventListener('timeupdate', () => {
+      if (vid.duration) progBar.style.width = (vid.currentTime / vid.duration * 100) + '%';
+    });
+    slide.querySelector('.vid-progress')?.addEventListener('click', e => {
+      e.stopPropagation();
+      const rect = e.currentTarget.getBoundingClientRect();
+      vid.currentTime = ((e.clientX - rect.left) / rect.width) * vid.duration;
+    });
+  }
+}
+
+function initSlideshow(total) {
+  let cur = 0;
+  const slides  = document.querySelectorAll('.slide');
+  const dots    = document.querySelectorAll('.sdot');
+  const counter = document.getElementById('slideCounter');
+  const ss      = document.getElementById('slideshow');
+
+  // Init video controls for all video slides
+  slides.forEach(s => {
+    if (s.classList.contains('slide-is-video')) initVideoControls(s);
+  });
+
+  // Pause all videos except the active one
+  function managVideos(activeIdx) {
+    slides.forEach((s, i) => {
+      const vid = s.querySelector('video');
+      if (!vid) return;
+      if (i === activeIdx) {
+        vid.play().catch(()=>{});
+      } else {
+        vid.pause();
+        vid.currentTime = 0;
+      }
+    });
+  }
+
+  function goTo(n) {
+    slides[cur].classList.remove('active');
+    dots[cur] && dots[cur].classList.remove('active');
+    cur = (n + total) % total;
+    slides[cur].classList.add('active');
+    dots[cur] && dots[cur].classList.add('active');
+    if (counter) counter.textContent = (cur+1) + ' / ' + total;
+    managVideos(cur);
+  }
+
+  // Start playing first slide if video
+  managVideos(0);
+
+  document.getElementById('slidePrev')?.addEventListener('click', e => { e.stopPropagation(); goTo(cur-1); });
+  document.getElementById('slideNext')?.addEventListener('click', e => { e.stopPropagation(); goTo(cur+1); });
+  dots.forEach(d => d.addEventListener('click', e => { e.stopPropagation(); goTo(+d.dataset.idx); }));
+
+  // Tap on slide → lightbox for images, nothing extra for videos (video handles its own click)
+  ss.addEventListener('click', e => {
+    if (e.target.closest('#slidePrev,#slideNext,.slide-dots,.vid-play-overlay,.vid-mute-btn,.vid-progress')) return;
+    const curSlide = slides[cur];
+    if (curSlide.classList.contains('slide-is-video')) return; // video handles itself
+    openLightbox(cur);
+  });
+
+  // Auto-slide only for image-only slideshows; if any video present, no auto-advance
+  const hasVideo = Array.from(slides).some(s => s.classList.contains('slide-is-video'));
+  if (!hasVideo) {
+    let timer = setInterval(() => goTo(cur+1), 3000);
+    ss.addEventListener('mouseenter', () => clearInterval(timer));
+    ss.addEventListener('mouseleave', () => { timer = setInterval(()=>goTo(cur+1), 3000); });
+  }
+
+  // Touch swipe
+  let tx = 0;
+  ss.addEventListener('touchstart', e => { tx = e.touches[0].clientX; }, {passive:true});
+  ss.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) goTo(dx < 0 ? cur+1 : cur-1);
+  });
+}
+
+// ── LIGHTBOX ──
+let lbCur = 0;
+
+function openLightbox(idx) {
+  if (!_resolvedImgs.length) return;
+  lbCur = idx;
+  document.getElementById('lbOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  buildLbDots(_resolvedImgs.length);
+  lbShow(lbCur);
+}
+
+function closeLightbox() {
+  document.getElementById('lbOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  const vid = document.getElementById('lbVideo');
+  if (vid) { vid.pause(); vid.src = ''; }
+}
+
+function lbShow(idx) {
+  lbCur = (idx + _resolvedImgs.length) % _resolvedImgs.length;
+  const src = _resolvedImgs[lbCur];
+  const isVid = /\.(mp4|mov|webm|avi)(\?|$)/i.test(src);
+  const img = document.getElementById('lbImg');
+  const vid = document.getElementById('lbVideo');
+
+  if (isVid) {
+    img.style.display = 'none';
+    vid.style.display = 'block';
+    vid.src = src;
+    vid.muted = false;
+    vid.play().catch(() => { vid.muted = true; vid.play().catch(()=>{}); });
+  } else {
+    vid.pause(); vid.src = '';
+    vid.style.display = 'none';
+    img.style.display = 'block';
+    img.style.opacity = '0';
+    setTimeout(() => {
+      img.src = src;
+      img.onload = img.onerror = () => { img.style.opacity = '1'; };
+    }, 150);
+  }
+  document.getElementById('lbCounterText').textContent = (lbCur+1) + ' / ' + _resolvedImgs.length;
+  document.querySelectorAll('.lb-dot').forEach((d,i) => d.classList.toggle('active', i===lbCur));
+}
+
+function buildLbDots(total) {
+  const row = document.getElementById('lbDotsRow');
+  row.innerHTML = '';
+  if (total <= 1) return;
+  for (let i = 0; i < Math.min(total, 12); i++) {
+    const d = document.createElement('span');
+    d.className = 'lb-dot';
+    d.addEventListener('click', () => lbShow(i));
+    row.appendChild(d);
+  }
+}
+
+// Lightbox controls
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+document.getElementById('lbPrev').addEventListener('click',  () => lbShow(lbCur-1));
+document.getElementById('lbNext').addEventListener('click',  () => lbShow(lbCur+1));
+document.getElementById('lbOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('lbOverlay')) closeLightbox();
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lbOverlay').classList.contains('open')) return;
+  if (e.key === 'ArrowLeft')  lbShow(lbCur-1);
+  if (e.key === 'ArrowRight') lbShow(lbCur+1);
+  if (e.key === 'Escape')     closeLightbox();
+});
+
+// Touch swipe on lightbox
+let lbTx = 0;
+document.getElementById('lbOverlay').addEventListener('touchstart', e => { lbTx = e.touches[0].clientX; }, {passive:true});
+document.getElementById('lbOverlay').addEventListener('touchend',   e => {
+  const dx = e.changedTouches[0].clientX - lbTx;
+  if (Math.abs(dx) > 50) lbShow(lbCur + (dx < 0 ? 1 : -1));
+});
+
+function showNotFound() {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('notFound').style.display     = 'block';
+}
+
+loadCategory();
+</script>
+</body>
+</html>

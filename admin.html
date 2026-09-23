@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Shelby Admin — Pro Panel</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <!-- JSZip CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#050510;--bg2:#08081e;--surface:#0f0f26;--surface2:#14143a;
+    --border:rgba(255,255,255,0.06);--border2:rgba(255,255,255,0.1);
+    --pink:#f0469a;--pink2:#ff6bb5;
+    --purple:#7c3aed;--purple2:#a78bfa;
+    --blue:#3b82f6;--blue2:#60a5fa;
+    --text:#eeeef8;--muted:#6b6b9a;--muted2:#9090c0;
+    --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--cyan:#06b6d4;
+    --grad:linear-gradient(135deg,#f0469a,#7c3aed);
+    --grad2:linear-gradient(135deg,#7c3aed,#06b6d4);
+    --grad3:linear-gradient(135deg,#f0469a 0%,#a855f7 50%,#06b6d4 100%);
+    --sidebar-w:72px;--sidebar-expanded:260px;
+    --radius:16px;--radius-sm:10px;
+  }
+  html{scroll-behavior:smooth;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+  /* ── BG ── */
+  .bg-mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+  .bg-mesh::before{content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 10% 10%,rgba(240,70,154,0.12),transparent 60%),
+               radial-gradient(ellipse 60% 50% at 90% 90%,rgba(124,58,237,0.12),transparent 60%),
+               radial-gradient(ellipse 40% 40% at 50% 50%,rgba(6,182,212,0.05),transparent 60%);}
+  .grid-lines{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.03;
+    background-image:linear-gradient(var(--border2) 1px,transparent 1px),linear-gradient(90deg,var(--border2) 1px,transparent 1px);
+    background-size:48px 48px;}
+
+  /* ── LOGIN ── */
+  #loginScreen{position:relative;z-index:10;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{
+    background:rgba(15,15,38,0.85);backdrop-filter:blur(40px);
+    border:1px solid rgba(240,70,154,0.2);border-radius:28px;
+    padding:52px 44px;width:100%;max-width:440px;
+    box-shadow:0 40px 100px rgba(0,0,0,0.7),0 0 80px rgba(240,70,154,0.08);
+    position:relative;overflow:hidden;
+  }
+  .login-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:var(--grad3);}
+  .login-card::after{content:'';position:absolute;bottom:-60px;right:-60px;
+    width:180px;height:180px;border-radius:50%;
+    background:radial-gradient(circle,rgba(124,58,237,0.15),transparent 70%);}
+  .login-brand{text-align:center;margin-bottom:40px;}
+  .login-logo-wrap{
+    width:80px;height:80px;margin:0 auto 20px;border-radius:24px;
+    background:var(--grad);display:flex;align-items:center;justify-content:center;
+    font-size:32px;color:#fff;box-shadow:0 12px 40px rgba(240,70,154,0.45);
+    position:relative;
+  }
+  .login-logo-wrap::after{content:'';position:absolute;inset:-2px;border-radius:26px;
+    background:var(--grad3);z-index:-1;filter:blur(8px);opacity:0.6;}
+  .login-brand h1{font-size:28px;font-weight:900;letter-spacing:-0.5px;}
+  .login-brand h1 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .login-brand p{font-size:13px;color:var(--muted2);margin-top:6px;}
+  .login-badge{display:inline-flex;align-items:center;gap:5px;margin-top:10px;
+    background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);
+    color:var(--green);font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;}
+  .lform-group{margin-bottom:22px;}
+  .lform-group label{display:block;font-size:11px;font-weight:700;color:var(--muted2);
+    text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .lform-input-wrap{position:relative;}
+  .lform-input-wrap i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;z-index:2;}
+  .lform-input-wrap input{
+    width:100%;padding:14px 16px 14px 46px;
+    background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+    border-radius:14px;color:var(--text);font-size:14px;font-family:inherit;outline:none;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .lform-input-wrap input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(240,70,154,0.15);}
+  .btn-login{
+    width:100%;padding:16px;background:var(--grad);border:none;border-radius:14px;
+    color:#fff;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;
+    transition:transform .2s,box-shadow .2s,opacity .2s;
+    box-shadow:0 8px 32px rgba(240,70,154,0.45);letter-spacing:0.3px;margin-top:4px;
+  }
+  .btn-login:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(240,70,154,0.55);}
+  .btn-login:active{transform:none;}
+  .login-error{
+    color:var(--red);font-size:13px;text-align:center;margin-top:14px;
+    padding:10px;background:rgba(239,68,68,0.08);border-radius:10px;
+    border:1px solid rgba(239,68,68,0.2);display:none;
+  }
+
+  /* ── LAYOUT ── */
+  #dashboard{display:none;position:relative;z-index:10;min-height:100vh;}
+
+  /* SIDEBAR */
+  .sidebar{
+    position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-expanded);
+    background:rgba(8,8,30,0.97);backdrop-filter:blur(20px);
+    border-right:1px solid var(--border);z-index:200;
+    display:flex;flex-direction:column;transition:transform .3s cubic-bezier(.4,0,.2,1);
+  }
+  .sidebar-top{
+    padding:24px 20px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:14px;
+  }
+  .sb-logo{
+    width:44px;height:44px;border-radius:14px;background:var(--grad);
+    display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;
+    flex-shrink:0;box-shadow:0 4px 20px rgba(240,70,154,0.4);
+  }
+  .sb-brand{flex:1;min-width:0;}
+  .sb-brand-name{font-size:16px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sb-brand-name span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .sb-brand-tag{font-size:10px;color:var(--muted);margin-top:1px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;}
+  .sidebar-nav{flex:1;padding:16px 12px;overflow-y:auto;}
+  .nav-section-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;
+    letter-spacing:1.4px;padding:0 10px;margin-bottom:6px;margin-top:16px;display:flex;align-items:center;gap:8px;}
+  .nav-section-label::before{content:'';flex:1;height:1px;background:var(--border);}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;
+    cursor:pointer;font-size:13px;font-weight:600;color:var(--muted2);
+    transition:all .18s;margin-bottom:2px;border:1px solid transparent;user-select:none;
+    text-decoration:none;
+  }
+  .nav-item-icon{
+    width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;
+    font-size:13px;background:rgba(255,255,255,0.04);flex-shrink:0;transition:all .18s;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+  .nav-item:hover .nav-item-icon{background:rgba(240,70,154,0.1);color:var(--pink);}
+  .nav-item.active{background:rgba(240,70,154,0.1);color:var(--pink2);border-color:rgba(240,70,154,0.2);}
+  .nav-item.active .nav-item-icon{background:rgba(240,70,154,0.18);color:var(--pink);}
+  .nav-badge{
+    margin-left:auto;font-size:10px;font-weight:800;min-width:22px;height:22px;
+    background:var(--grad);color:#fff;border-radius:20px;display:flex;align-items:center;justify-content:center;padding:0 6px;
+  }
+  .sidebar-footer{padding:16px 12px;border-top:1px solid var(--border);}
+  .btn-logout{
+    width:100%;display:flex;align-items:center;gap:10px;justify-content:center;
+    padding:11px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.18);
+    color:#ff8080;border-radius:12px;font-size:13px;cursor:pointer;font-weight:700;
+    font-family:inherit;transition:all .2s;
+  }
+  .btn-logout:hover{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:190;backdrop-filter:blur(4px);}
+
+  /* MAIN */
+  .main-content{margin-left:var(--sidebar-expanded);min-height:100vh;display:flex;flex-direction:column;}
+  .topbar{
+    position:sticky;top:0;z-index:100;
+    background:rgba(5,5,16,0.92);backdrop-filter:blur(24px);
+    border-bottom:1px solid var(--border);padding:0 32px;height:68px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  .topbar-left{display:flex;align-items:center;gap:16px;}
+  .mobile-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:20px;cursor:pointer;padding:6px;}
+  .page-breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .page-breadcrumb .bc-home{color:var(--muted);font-size:11px;}
+  .page-breadcrumb .bc-sep{color:var(--muted);font-size:10px;}
+  .page-breadcrumb .bc-current{font-size:18px;font-weight:900;letter-spacing:-0.3px;}
+  .page-breadcrumb .bc-current span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .topbar-right{display:flex;align-items:center;gap:10px;}
+  .topbar-time{
+    font-size:12px;color:var(--muted2);background:rgba(255,255,255,0.04);
+    border:1px solid var(--border2);padding:6px 14px;border-radius:20px;
+    display:flex;align-items:center;gap:7px;
+  }
+  .topbar-time .live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:livePulse 1.5s infinite;}
+  @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.5)}}
+  .btn-refresh{
+    display:flex;align-items:center;gap:7px;background:rgba(240,70,154,0.08);
+    border:1px solid rgba(240,70,154,0.2);color:var(--pink);
+    padding:8px 18px;border-radius:10px;font-size:12px;cursor:pointer;font-weight:700;
+    font-family:inherit;transition:all .2s;
+  }
+  .btn-refresh:hover{background:rgba(240,70,154,0.16);}
+  .btn-refresh.spinning i{animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .content-area{padding:32px;flex:1;}
+
+  /* ── STAT CARDS ── */
+  .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px;}
+  .stat-card{
+    background:var(--surface);border:1px solid var(--border);border-radius:20px;
+    padding:24px;position:relative;overflow:hidden;cursor:default;
+    transition:transform .22s,box-shadow .22s;
+  }
+  .stat-card:hover{transform:translateY(-3px);}
+  .stat-card-accent{position:absolute;top:0;left:0;right:0;height:2px;}
+  .stat-card-glow{position:absolute;top:-20px;right:-20px;width:100px;height:100px;border-radius:50%;filter:blur(35px);opacity:.15;pointer-events:none;}
+  .stat-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;}
+  .stat-icon{width:44px;height:44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .stat-chip{font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+  .stat-chip.up{background:rgba(34,197,94,0.12);color:var(--green);}
+  .stat-chip.neu{background:rgba(113,113,160,0.1);color:var(--muted2);}
+  .stat-label{font-size:11px;color:var(--muted2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+  .stat-value{font-size:38px;font-weight:900;line-height:1;letter-spacing:-2px;}
+  .stat-desc{font-size:11px;color:var(--muted);margin-top:6px;}
+  .sc-pink .stat-card-accent{background:var(--grad);}
+  .sc-pink .stat-card-glow{background:var(--pink);}
+  .sc-pink .stat-value{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .sc-pink .stat-icon{background:rgba(240,70,154,0.12);color:var(--pink);}
+  .sc-purple .stat-card-accent{background:linear-gradient(90deg,var(--purple),var(--purple2));}
+  .sc-purple .stat-card-glow{background:var(--purple);}
+  .sc-purple .stat-value{color:var(--purple2);}
+  .sc-purple .stat-icon{background:rgba(124,58,237,0.12);color:var(--purple2);}
+  .sc-green .stat-card-accent{background:linear-gradient(90deg,#16a34a,var(--green));}
+  .sc-green .stat-card-glow{background:var(--green);}
+  .sc-green .stat-value{color:var(--green);}
+  .sc-green .stat-icon{background:rgba(34,197,94,0.12);color:var(--green);}
+  .sc-yellow .stat-card-accent{background:linear-gradient(90deg,#d97706,var(--yellow));}
+  .sc-yellow .stat-card-glow{background:var(--yellow);}
+  .sc-yellow .stat-value{color:var(--yellow);}
+  .sc-yellow .stat-icon{background:rgba(245,158,11,0.12);color:var(--yellow);}
+  .sc-cyan .stat-card-accent{background:var(--grad2);}
+  .sc-cyan .stat-card-glow{background:var(--cyan);}
+  .sc-cyan .stat-value{color:var(--cyan);}
+  .sc-cyan .stat-icon{background:rgba(6,182,212,0.12);color:var(--cyan);}
+
+  /* ── PANEL ── */
+  .panel{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:24px;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .panel-title{display:flex;align-items:center;gap:12px;}
+  .panel-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(240,70,154,0.1);color:var(--pink);}
+  .panel-title h3{font-size:15px;font-weight:800;}
+  .panel-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .live-pill{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;color:var(--green);
+    background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);padding:5px 12px;border-radius:20px;}
+
+  /* ── CHART ── */
+  .chart-container{margin-top:8px;}
+  .chart-bars{display:flex;align-items:flex-end;gap:8px;height:160px;position:relative;}
+  .chart-bars::before{content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(to top,transparent,transparent calc(25% - 1px),rgba(255,255,255,0.03) calc(25% - 1px),rgba(255,255,255,0.03) 25%);
+    pointer-events:none;}
+  .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end;}
+  .bar-fill{width:100%;border-radius:8px 8px 0 0;background:var(--grad);min-height:4px;position:relative;cursor:default;transition:height .6s cubic-bezier(.4,0,.2,1);}
+  .bar-fill::before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(to bottom,rgba(255,255,255,0.18),transparent);}
+  .bar-tip{position:absolute;top:-36px;left:50%;transform:translateX(-50%);background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;white-space:nowrap;color:var(--text);opacity:0;pointer-events:none;transition:opacity .15s;z-index:10;}
+  .bar-col:hover .bar-tip{opacity:1;}
+  .bar-label{font-size:10px;color:var(--muted);font-weight:600;}
+
+  /* ── TABLE ── */
+  .tbl-wrap{overflow-x:auto;}
+  .data-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .data-table thead tr{border-bottom:1px solid var(--border);}
+  .data-table th{text-align:left;padding:10px 14px;color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;white-space:nowrap;}
+  .data-table td{padding:13px 14px;border-bottom:1px solid rgba(255,255,255,0.035);vertical-align:middle;}
+  .data-table tr:last-child td{border-bottom:none;}
+  .data-table tbody tr{transition:background .12s;}
+  .data-table tbody tr:hover td{background:rgba(255,255,255,0.02);}
+  .row-num{color:var(--muted);font-size:11px;font-weight:600;}
+  .time-cell{color:var(--muted2);font-size:12px;white-space:nowrap;}
+  .pkg-cell{font-weight:700;}
+  .amt-cell{color:var(--green);font-weight:800;font-size:14px;}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:11px;font-weight:700;}
+  .pill.pink{background:rgba(240,70,154,0.12);color:var(--pink2);border:1px solid rgba(240,70,154,0.2);}
+  .pill.purple{background:rgba(124,58,237,0.1);color:var(--purple2);border:1px solid rgba(124,58,237,0.2);}
+  .pill.green{background:rgba(34,197,94,0.1);color:var(--green);border:1px solid rgba(34,197,94,0.2);}
+  .pill.yellow{background:rgba(245,158,11,0.1);color:var(--yellow);border:1px solid rgba(245,158,11,0.2);}
+  .btn-view-img{display:inline-flex;align-items:center;gap:6px;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);color:var(--purple2);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;transition:all .2s;}
+  .btn-view-img:hover{background:rgba(124,58,237,0.18);}
+  .btn-mark-done{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:var(--green);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .btn-mark-done:hover{background:rgba(34,197,94,0.18);}
+  .btn-mark-done:disabled{opacity:.5;cursor:not-allowed;}
+
+  /* ── PRODUCT GRID ── */
+  .prod-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;}
+  .prod-toolbar-left h2{font-size:22px;font-weight:900;}
+  .prod-toolbar-left h2 span{background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+  .prod-toolbar-left p{font-size:13px;color:var(--muted);margin-top:3px;}
+  .btn-add-prod{
+    display:inline-flex;align-items:center;gap:8px;background:var(--grad);border:none;
+    color:#fff;padding:11px 22px;border-radius:12px;font-size:13px;font-weight:800;
+    cursor:pointer;font-family:inherit;transition:transform .2s,box-shadow .2s;
+    box-shadow:0 4px 20px rgba(240,70,154,0.35);
+  }
+  .btn-add-prod:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(240,70,154,0.5);}
+  .prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:18px;}
+  .prod-card{
+    background:var(--surface2);border:1px solid var(--border);border-radius:18px;
+    overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s;
+    position:relative;
+  }
+  .prod-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,0.5);border-color:rgba(240,70,154,0.2);}
+  .prod-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--grad);opacity:0;transition:opacity .2s;}
+  .prod-card:hover::before{opacity:1;}
+  .prod-thumb{position:relative;height:170px;overflow:hidden;background:#08081e;}
+  .prod-thumb img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
+  .prod-card:hover .prod-thumb img{transform:scale(1.06);}
+  .prod-thumb-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:36px;opacity:.3;}
+  .prod-order-tag{
+    position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(8px);color:var(--muted2);font-size:10px;font-weight:800;
+    padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);
+  }
+  .prod-img-count{
+    position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(8px);color:var(--muted2);font-size:10px;font-weight:700;
+    padding:3px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.1);
+    display:flex;align-items:center;gap:5px;
+  }
+  .prod-body{padding:16px;}
+  .prod-name{font-size:15px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;}
+  .prod-badge-row{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+  .prod-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;background:rgba(240,70,154,0.1);color:var(--pink);border:1px solid rgba(240,70,154,0.2);}
+  .prod-prices{display:flex;gap:12px;margin-bottom:14px;}
+  .price-chip{flex:1;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;padding:8px 10px;text-align:center;}
+  .price-chip .lbl{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;}
+  .price-chip .val{font-size:14px;font-weight:900;color:var(--green);}
+  .prod-actions{display:flex;gap:8px;flex-wrap:wrap;}
+  .btn-edit{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+    background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);
+    color:var(--purple2);padding:9px;border-radius:10px;font-size:12px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:all .2s;
+  }
+  .btn-edit:hover{background:rgba(124,58,237,0.18);}
+  .btn-del{
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);
+    color:#ff8080;padding:9px 14px;border-radius:10px;font-size:12px;
+    cursor:pointer;font-family:inherit;transition:all .2s;
+  }
+  .btn-del:hover{background:rgba(239,68,68,0.16);border-color:rgba(239,68,68,0.3);}
+  /* download zip button */
+  .btn-zip{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.2);
+    color:var(--cyan);padding:9px 14px;border-radius:10px;font-size:12px;font-weight:700;
+    cursor:pointer;font-family:inherit;transition:all .2s;flex:1;
+  }
+  .btn-zip:hover{background:rgba(6,182,212,0.18);}
+  .btn-zip.loading{opacity:0.7;pointer-events:none;}
+
+  /* ── EMPTY / SPINNER ── */
+  .spinner-wrap{text-align:center;padding:56px 20px;color:var(--muted);}
+  .spinner{width:44px;height:44px;margin:0 auto 16px;border:3px solid rgba(240,70,154,0.12);
+    border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite;}
+  .spinner-wrap p{font-size:13px;}
+  .empty{text-align:center;padding:60px 20px;}
+  .empty i{font-size:44px;color:var(--muted);opacity:.3;display:block;margin-bottom:16px;}
+  .empty p{color:var(--muted);font-size:14px;}
+
+  /* ── TAB PANES ── */
+  .tab-pane{display:none;}
+  .tab-pane.active{display:block;animation:fadeUp .3s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ── TOAST ── */
+  .toast-global{
+    position:fixed;bottom:28px;right:28px;z-index:9999;
+    background:var(--surface);border:1px solid rgba(34,197,94,0.3);
+    color:var(--green);padding:14px 22px;border-radius:16px;font-size:13px;font-weight:700;
+    display:flex;align-items:center;gap:10px;
+    transform:translateY(90px) scale(.95);opacity:0;
+    transition:all .35s cubic-bezier(.4,0,.2,1);
+    box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  }
+  .toast-global.show{transform:none;opacity:1;}
+
+  /* ── MODAL ── */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:8000;display:none;align-items:flex-start;justify-content:center;padding:20px;backdrop-filter:blur(12px);overflow-y:auto;}
+  .modal-overlay.open{display:flex;}
+  .modal-box{
+    background:var(--surface);border:1px solid var(--border2);border-radius:24px;
+    width:100%;max-width:680px;position:relative;margin:auto;
+    box-shadow:0 40px 100px rgba(0,0,0,0.8);
+    animation:modalIn .3s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes modalIn{from{opacity:0;transform:translateY(30px) scale(.97)}to{opacity:1;transform:none}}
+  .modal-hd{
+    padding:24px 28px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:14px;
+    position:sticky;top:0;background:var(--surface);z-index:2;border-radius:24px 24px 0 0;
+  }
+  .modal-hd-icon{width:40px;height:40px;border-radius:12px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex-shrink:0;}
+  .modal-hd h3{font-size:17px;font-weight:900;flex:1;}
+  .modal-hd-close{width:36px;height:36px;background:rgba(255,255,255,0.05);border:1px solid var(--border2);border-radius:10px;color:var(--muted2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .modal-hd-close:hover{background:rgba(239,68,68,0.12);color:#ff8080;border-color:rgba(239,68,68,0.2);}
+
+  /* Live preview bar */
+  .modal-preview{
+    margin:20px 28px 0;background:var(--surface2);border:1px solid var(--border2);
+    border-radius:14px;padding:14px 18px;display:flex;align-items:center;gap:14px;
+  }
+  .mp-thumb{width:56px;height:56px;border-radius:12px;overflow:hidden;background:#0a0a22;flex-shrink:0;border:1px solid var(--border2);}
+  .mp-thumb img{width:100%;height:100%;object-fit:cover;}
+  .mp-thumb-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px;}
+  .mp-info{flex:1;min-width:0;}
+  .mp-name{font-size:14px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .mp-meta{display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;}
+  .mp-chip{font-size:11px;padding:2px 10px;border-radius:20px;font-weight:700;}
+  .mp-chip.badge{background:rgba(240,70,154,0.1);color:var(--pink);border:1px solid rgba(240,70,154,0.2);}
+  .mp-chip.inr{background:rgba(34,197,94,0.1);color:var(--green);}
+  .mp-chip.usd{background:rgba(6,182,212,0.1);color:var(--cyan);}
+  .mp-label{font-size:10px;color:var(--muted);flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .mp-label i{font-size:14px;margin-bottom:2px;}
+
+  /* Form */
+  .modal-body{padding:20px 28px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .fg-full{grid-column:1/-1;}
+  .fg{display:flex;flex-direction:column;gap:6px;}
+  .fg label{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;display:flex;align-items:center;gap:6px;}
+  .fg label i{font-size:12px;}
+  .fg input,.fg textarea,.fg select{
+    background:rgba(255,255,255,0.04);border:1px solid var(--border2);
+    border-radius:11px;color:var(--text);font-size:13px;font-family:inherit;
+    padding:11px 14px;outline:none;transition:border-color .2s,box-shadow .2s;resize:vertical;
+  }
+  .fg input:focus,.fg textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(240,70,154,0.12);}
+  .fg textarea{min-height:78px;}
+  .fg-hint{font-size:10px;color:var(--muted);margin-top:3px;}
+
+  /* Section divider inside modal */
+  .modal-section-title{
+    display:flex;align-items:center;gap:10px;margin:20px 0 14px;
+    font-size:12px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;
+  }
+  .modal-section-title::after{content:'';flex:1;height:1px;background:var(--border2);}
+
+  /* Selected images strip */
+  .selected-imgs{display:flex;flex-wrap:wrap;gap:8px;min-height:40px;margin-bottom:12px;}
+  .si-item{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;border:1px solid var(--border2);flex-shrink:0;}
+  .si-item img{width:100%;height:100%;object-fit:cover;}
+  .si-num{position:absolute;bottom:3px;left:4px;background:rgba(0,0,0,0.8);color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;}
+  .si-del{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(239,68,68,0.9);border:none;border-radius:50%;color:#fff;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+  .si-del:hover{transform:scale(1.2);}
+  .si-empty{font-size:12px;color:var(--muted);padding:10px 0;display:flex;align-items:center;gap:7px;}
+
+  /* Image gallery picker */
+  .img-picker-box{background:rgba(255,255,255,0.02);border:1px solid var(--border2);border-radius:12px;padding:14px;}
+  .img-picker-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+  .img-picker-head span{font-size:12px;color:var(--muted2);font-weight:700;display:flex;align-items:center;gap:7px;}
+  .img-picker-actions{display:flex;gap:6px;}
+  .btn-sel-all{background:rgba(240,70,154,0.08);border:1px solid rgba(240,70,154,0.2);color:var(--pink);padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;}
+  .btn-sel-all:hover{background:rgba(240,70,154,0.18);}
+  .btn-clr-all{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.18);color:#ff8080;padding:5px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;}
+  .btn-clr-all:hover{background:rgba(239,68,68,0.15);}
+  .img-picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;max-height:250px;overflow-y:auto;padding-right:2px;}
+  .img-picker-grid::-webkit-scrollbar{width:4px;}
+  .img-picker-grid::-webkit-scrollbar-track{background:transparent;}
+  .img-picker-grid::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+  .gib{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:#0a0a22;transition:all .18s;}
+  .gib img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+  .gib-ck{position:absolute;inset:0;background:rgba(240,70,154,0.55);display:none;align-items:center;justify-content:center;font-size:20px;color:#fff;}
+  .gib.selected{border-color:var(--pink);box-shadow:0 0 0 2px rgba(240,70,154,0.35);}
+  .gib.selected .gib-ck{display:flex;}
+  .gib:hover:not(.selected){border-color:rgba(255,255,255,0.25);transform:scale(1.04);}
+
+  /* Modal footer */
+  .modal-ft{padding:20px 28px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;border-radius:0 0 24px 24px;}
+  .btn-cancel{padding:11px 22px;background:rgba(255,255,255,0.05);border:1px solid var(--border2);color:var(--muted2);border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;}
+  .btn-cancel:hover{background:rgba(255,255,255,0.09);}
+  .btn-save{padding:11px 28px;background:var(--grad);border:none;color:#fff;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(240,70,154,0.35);display:flex;align-items:center;gap:8px;}
+  .btn-save:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(240,70,154,0.5);}
+  .btn-save:disabled{opacity:.6;cursor:not-allowed;transform:none;}
+
+  /* Screenshot modal */
+  .scr-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(12px);}
+  .scr-modal-overlay.open{display:flex;}
+  .scr-modal-box{position:relative;max-width:640px;width:100%;}
+  .scr-modal-box img{width:100%;border-radius:20px;display:block;box-shadow:0 40px 80px rgba(0,0,0,0.8);}
+  .scr-close{position:absolute;top:-14px;right:-14px;width:36px;height:36px;background:var(--red);border:none;border-radius:50%;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+
+  /* Responsive */
+  @media(max-width:900px){
+    .sidebar{transform:translateX(-100%);}
+    .sidebar.open{transform:translateX(0);}
+    .sidebar-overlay.open{display:block;}
+    .main-content{margin-left:0;}
+    .mobile-menu-btn{display:block;}
+    .content-area{padding:20px 16px;}
+    .stats-row{grid-template-columns:1fr 1fr;}
+    .stat-value{font-size:30px;}
+    .topbar{padding:0 16px;}
+  }
+  @media(max-width:560px){
+    .stats-row{grid-template-columns:1fr 1fr;}
+    .form-grid{grid-template-columns:1fr;}
+    .modal-box{border-radius:20px;}
+    .data-table th:nth-child(4),.data-table td:nth-child(4){display:none;}
+  }
+  </style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="grid-lines"></div>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-logo-wrap"><i class="fa-solid fa-fire-flame-curved"></i></div>
+      <h1>Shelby <span>Admin</span></h1>
+      <p>Secure dashboard for store management</p>
+      <div class="login-badge"><i class="fa-solid fa-shield-halved"></i> Protected Access</div>
+    </div>
+    <div class="lform-group">
+      <label>Username</label>
+      <div class="lform-input-wrap">
+        <i class="fa-solid fa-user"></i>
+        <input type="text" id="loginId" placeholder="Enter username" autocomplete="off"/>
+      </div>
+    </div>
+    <div class="lform-group">
+      <label>Password</label>
+      <div class="lform-input-wrap">
+        <i class="fa-solid fa-lock"></i>
+        <input type="password" id="loginPass" placeholder="Enter password"/>
+      </div>
+    </div>
+    <button class="btn-login" id="loginBtn"><i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard</button>
+    <div class="login-error" id="loginErr"><i class="fa-solid fa-circle-exclamation"></i> Invalid credentials. Try again.</div>
+  </div>
+</div>
+
+<!-- ══════════ DASHBOARD ══════════ -->
+<div id="dashboard">
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-top">
+      <div class="sb-logo"><i class="fa-solid fa-fire-flame-curved"></i></div>
+      <div class="sb-brand">
+        <div class="sb-brand-name"><span>Shelby</span> Admin</div>
+        <div class="sb-brand-tag">Pro Panel v2</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Analytics</div>
+      <div class="nav-item active" data-tab="analytics">
+        <div class="nav-item-icon"><i class="fa-solid fa-chart-bar"></i></div>
+        <span>Visitors</span>
+        <span class="nav-badge" id="navVisitorCount">0</span>
+      </div>
+      <div class="nav-section-label">Commerce</div>
+      <div class="nav-item" data-tab="orders">
+        <div class="nav-item-icon"><i class="fa-solid fa-bag-shopping"></i></div>
+        <span>Orders</span>
+        <span class="nav-badge" id="navOrderCount">0</span>
+      </div>
+      <div class="nav-item" data-tab="products">
+        <div class="nav-item-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <span>Categories</span>
+        <span class="nav-badge" id="navProductCount">0</span>
+      </div>
+      <div class="nav-section-label">Settings</div>
+      <div class="nav-item" data-tab="payment-settings">
+        <div class="nav-item-icon"><i class="fa-solid fa-wallet"></i></div>
+        <span>Payment Details</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="btn-logout" id="logoutBtn"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="main-content">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuBtn"><i class="fa-solid fa-bars"></i></button>
+        <div class="page-breadcrumb">
+          <span class="bc-home"><i class="fa-solid fa-house"></i></span>
+          <span class="bc-sep"><i class="fa-solid fa-chevron-right" style="font-size:9px"></i></span>
+          <div class="bc-current" id="pageTitle"><span>Visitors</span> Analytics</div>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-time">
+          <span class="live-dot"></span>
+          <span id="lastRefreshed">Loading...</span>
+        </div>
+        <button class="btn-refresh" id="refreshTopBtn"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div class="content-area">
+
+      <!-- ── ANALYTICS TAB ── -->
+      <div class="tab-pane active" id="tab-analytics">
+        <div class="stats-row">
+          <div class="stat-card sc-pink">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top">
+              <div class="stat-icon"><i class="fa-solid fa-calendar-day"></i></div>
+              <span class="stat-chip up"><i class="fa-solid fa-circle" style="font-size:7px"></i> Live</span>
+            </div>
+            <div class="stat-label">Today</div>
+            <div class="stat-value" id="countToday">—</div>
+            <div class="stat-desc">Visitors today</div>
+          </div>
+          <div class="stat-card sc-purple">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top">
+              <div class="stat-icon"><i class="fa-solid fa-calendar-week"></i></div>
+              <span class="stat-chip neu"><i class="fa-solid fa-clock"></i> 7d</span>
+            </div>
+            <div class="stat-label">Last 7 Days</div>
+            <div class="stat-value" id="count7">—</div>
+            <div class="stat-desc">Weekly visitors</div>
+          </div>
+          <div class="stat-card sc-green">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top">
+              <div class="stat-icon"><i class="fa-solid fa-calendar-days"></i></div>
+              <span class="stat-chip neu"><i class="fa-solid fa-clock"></i> 30d</span>
+            </div>
+            <div class="stat-label">Last 30 Days</div>
+            <div class="stat-value" id="count30">—</div>
+            <div class="stat-desc">Monthly visitors</div>
+          </div>
+          <div class="stat-card sc-yellow">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top">
+              <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
+              <span class="stat-chip neu">Avg</span>
+            </div>
+            <div class="stat-label">Daily Average</div>
+            <div class="stat-value" id="countAvg">—</div>
+            <div class="stat-desc">Per day (30d)</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <div class="panel-icon"><i class="fa-solid fa-chart-bar"></i></div>
+              <div><h3>Daily Traffic</h3><div class="panel-sub">Last 7 days visitor breakdown</div></div>
+            </div>
+          </div>
+          <div class="chart-container">
+            <div class="chart-bars" id="chartBars">
+              <div class="spinner-wrap" style="width:100%"><div class="spinner"></div><p>Building chart...</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <div class="panel-icon"><i class="fa-solid fa-users"></i></div>
+              <div><h3>Recent Visitors</h3><div class="panel-sub">Last 50 visits</div></div>
+            </div>
+            <div class="live-pill"><span class="live-dot"></span> Live</div>
+          </div>
+          <div class="tbl-wrap" id="tableWrap">
+            <div class="spinner-wrap"><div class="spinner"></div><p>Fetching visitors...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── ORDERS TAB ── -->
+      <div class="tab-pane" id="tab-orders">
+        <div class="stats-row">
+          <div class="stat-card sc-pink">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top"><div class="stat-icon"><i class="fa-solid fa-bag-shopping"></i></div><span class="stat-chip neu">All</span></div>
+            <div class="stat-label">Total Orders</div>
+            <div class="stat-value" id="ordTotal">—</div>
+            <div class="stat-desc">All time</div>
+          </div>
+          <div class="stat-card sc-yellow">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top"><div class="stat-icon"><i class="fa-solid fa-clock"></i></div><span class="stat-chip neu">Awaiting</span></div>
+            <div class="stat-label">Pending</div>
+            <div class="stat-value" id="ordPending">—</div>
+            <div class="stat-desc">Need delivery</div>
+          </div>
+          <div class="stat-card sc-green">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top"><div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div><span class="stat-chip up"><i class="fa-solid fa-check"></i> Done</span></div>
+            <div class="stat-label">Completed</div>
+            <div class="stat-value" id="ordDone">—</div>
+            <div class="stat-desc">Delivered</div>
+          </div>
+          <div class="stat-card sc-cyan">
+            <div class="stat-card-accent"></div><div class="stat-card-glow"></div>
+            <div class="stat-card-top"><div class="stat-icon"><i class="fa-solid fa-calendar-day"></i></div><span class="stat-chip up"><i class="fa-solid fa-bolt"></i> Today</span></div>
+            <div class="stat-label">Today's Orders</div>
+            <div class="stat-value" id="ordToday">—</div>
+            <div class="stat-desc">New today</div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">
+              <div class="panel-icon"><i class="fa-solid fa-list-check"></i></div>
+              <div><h3>All Orders</h3><div class="panel-sub">Manage and track customer orders</div></div>
+            </div>
+          </div>
+          <div class="tbl-wrap" id="ordersTableWrap">
+            <div class="spinner-wrap"><div class="spinner"></div><p>Fetching orders...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── PRODUCTS TAB ── -->
+      <div class="tab-pane" id="tab-products">
+        <div class="prod-toolbar">
+          <div class="prod-toolbar-left">
+            <h2>Category <span>Manager</span></h2>
+            <p>Add, edit or remove product categories from your store</p>
+          </div>
+          <button class="btn-add-prod" id="btnAddProd"><i class="fa-solid fa-plus"></i> Add Category</button>
+        </div>
+        <div class="prod-grid" id="prodGrid">
+          <div class="spinner-wrap" style="grid-column:1/-1"><div class="spinner"></div><p>Loading categories...</p></div>
+        </div>
+      </div>
+
+      <!-- ── PAYMENT SETTINGS TAB ── -->
+      <div class="tab-pane" id="tab-payment-settings">
+        <div class="prod-toolbar">
+          <div class="prod-toolbar-left">
+            <h2>Payment <span>Settings</span></h2>
+            <p>Update your UPI, crypto addresses, PayPal and Telegram links</p>
+          </div>
+          <button class="btn-add-prod" id="btnSavePayment" onclick="savePaymentSettings()">
+            <i class="fa-solid fa-floppy-disk"></i> Save All Changes
+          </button>
+        </div>
+
+        <!-- Info banner -->
+        <div style="background:rgba(6,182,212,0.07);border:1px solid rgba(6,182,212,0.2);border-radius:14px;padding:14px 18px;margin-bottom:24px;display:flex;align-items:flex-start;gap:12px;">
+          <i class="fa-solid fa-circle-info" style="color:var(--cyan);margin-top:2px;font-size:16px;flex-shrink:0;"></i>
+          <div style="font-size:13px;color:var(--muted2);line-height:1.6;">
+            Changes save to Firebase instantly. Payment page will use these updated details for all new orders.
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+          <!-- UPI -->
+          <div class="panel">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(99,102,241,0.12);color:#818cf8;"><i class="fa-solid fa-mobile-screen"></i></div>
+                <div><h3>UPI Payment</h3><div class="panel-sub">GPay · PhonePe · Paytm</div></div>
+              </div>
+              <span class="pill green" style="font-size:10px;">INR</span>
+            </div>
+            <div class="fg">
+              <label><i class="fa-solid fa-at" style="color:#818cf8"></i> UPI ID</label>
+              <input type="text" id="ps_upiId" placeholder="yourname@upi" style="font-family:monospace;font-size:13px;"/>
+            </div>
+          </div>
+
+          <!-- Telegram -->
+          <div class="panel">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(34,158,217,0.12);color:#229ed9;"><i class="fa-brands fa-telegram"></i></div>
+                <div><h3>Telegram</h3><div class="panel-sub">Order delivery link</div></div>
+              </div>
+            </div>
+            <div class="fg">
+              <label><i class="fa-brands fa-telegram" style="color:#229ed9"></i> Telegram URL</label>
+              <input type="text" id="ps_telegramUrl" placeholder="https://t.me/username"/>
+            </div>
+          </div>
+
+          <!-- BTC -->
+          <div class="panel">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(247,147,26,0.12);color:#f7931a;"><i class="fa-brands fa-bitcoin"></i></div>
+                <div><h3>Bitcoin (BTC)</h3><div class="panel-sub">Bitcoin Network</div></div>
+              </div>
+              <span class="pill yellow" style="font-size:10px;">BTC</span>
+            </div>
+            <div class="fg">
+              <label><i class="fa-solid fa-wallet" style="color:#f7931a"></i> BTC Address</label>
+              <input type="text" id="ps_bep20Address" placeholder="bc1q..." style="font-family:monospace;font-size:12px;"/>
+            </div>
+          </div>
+
+          <!-- USDT TRC20 -->
+          <div class="panel">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(255,6,10,0.08);color:#ff060a;"><i class="fa-solid fa-circle-dollar-to-slot"></i></div>
+                <div><h3>USDT TRC-20</h3><div class="panel-sub">Tron Network</div></div>
+              </div>
+              <span class="pill" style="background:rgba(255,6,10,0.1);color:#ff6b6b;border:1px solid rgba(255,6,10,0.2);font-size:10px;">TRC20</span>
+            </div>
+            <div class="fg">
+              <label><i class="fa-solid fa-wallet" style="color:#ff060a"></i> TRX Address</label>
+              <input type="text" id="ps_trxAddress" placeholder="T..." style="font-family:monospace;font-size:12px;"/>
+            </div>
+          </div>
+
+          <!-- ETH -->
+          <div class="panel">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(98,126,234,0.12);color:#627eea;"><i class="fa-brands fa-ethereum"></i></div>
+                <div><h3>Ethereum (ETH)</h3><div class="panel-sub">ERC-20 Network</div></div>
+              </div>
+              <span class="pill" style="background:rgba(98,126,234,0.1);color:#627eea;border:1px solid rgba(98,126,234,0.2);font-size:10px;">ERC20</span>
+            </div>
+            <div class="fg">
+              <label><i class="fa-solid fa-wallet" style="color:#627eea"></i> ETH Address</label>
+              <input type="text" id="ps_ethAddress" placeholder="0x..." style="font-family:monospace;font-size:12px;"/>
+            </div>
+          </div>
+
+          <!-- PayPal -->
+          <div class="panel">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(0,48,135,0.15);color:#009cde;"><i class="fa-brands fa-paypal"></i></div>
+                <div><h3>PayPal</h3><div class="panel-sub">International payments</div></div>
+              </div>
+              <span class="pill" style="background:rgba(0,156,222,0.1);color:#009cde;border:1px solid rgba(0,156,222,0.2);font-size:10px;">INTL</span>
+            </div>
+            <div class="fg">
+              <label><i class="fa-brands fa-paypal" style="color:#009cde"></i> PayPal.me Link</label>
+              <input type="text" id="ps_paypalLink" placeholder="https://www.paypal.me/yourname"/>
+            </div>
+          </div>
+
+          <!-- Binance -->
+          <div class="panel" style="grid-column:1/-1;">
+            <div class="panel-head" style="margin-bottom:18px;">
+              <div class="panel-title">
+                <div class="panel-icon" style="background:rgba(240,185,11,0.12);color:#f0b90b;"><i class="fa-solid fa-coins"></i></div>
+                <div><h3>Binance</h3><div class="panel-sub">Gift Card + User ID</div></div>
+              </div>
+              <span class="pill yellow" style="font-size:10px;">USDT</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+              <div class="fg">
+                <label><i class="fa-solid fa-id-badge" style="color:#f0b90b"></i> Binance User ID</label>
+                <input type="text" id="ps_binanceId" placeholder="969887942" style="font-family:monospace;"/>
+              </div>
+              <div class="fg">
+                <label><i class="fa-solid fa-link" style="color:#f0b90b"></i> Gift Card Buy URL</label>
+                <input type="text" id="ps_binanceGiftCardUrl" placeholder="https://www.g2a.com/..."/>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Save button bottom -->
+        <div style="text-align:right;margin-top:8px;">
+          <button class="btn-save" onclick="savePaymentSettings()" style="padding:13px 32px;font-size:14px;">
+            <i class="fa-solid fa-floppy-disk"></i> Save All Payment Settings
+          </button>
+        </div>
+      </div>
+
+    </div><!-- /content-area -->
+  </div><!-- /main-content -->
+</div><!-- /dashboard -->
+
+<!-- ══════════ CATEGORY EDIT MODAL ══════════ -->
+<div class="modal-overlay" id="prodModal">
+  <div class="modal-box">
+    <div class="modal-hd">
+      <div class="modal-hd-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <h3 id="prodModalTitle">Add Category</h3>
+      <button class="modal-hd-close" id="prodModalClose"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <!-- Live preview -->
+    <div class="modal-preview">
+      <div class="mp-thumb">
+        <img id="lpThumbImg" src="" alt="" style="display:none"/>
+        <div class="mp-thumb-ph" id="lpThumbPh"><i class="fa-solid fa-image"></i></div>
+      </div>
+      <div class="mp-info">
+        <div class="mp-name" id="lpTitle">Category Name</div>
+        <div class="mp-meta">
+          <span class="mp-chip badge"><i id="lpIcon" class="fa-solid fa-tag"></i> <span id="lpBadgeTxt">BADGE</span></span>
+          <span class="mp-chip inr" id="lpPriceINR">₹0</span>
+          <span class="mp-chip usd" id="lpPriceUSD">$0</span>
+        </div>
+      </div>
+      <div class="mp-label"><i class="fa-solid fa-eye"></i>Preview</div>
+    </div>
+
+    <div class="modal-body">
+      <input type="hidden" id="editProdId"/>
+      <div class="form-grid">
+
+        <div class="fg">
+          <label><i class="fa-solid fa-heading" style="color:var(--pink)"></i> Category Name *</label>
+          <input type="text" id="fTitle" placeholder="e.g. MOM SON" oninput="updateLivePreview()"/>
+        </div>
+        <div class="fg">
+          <label><i class="fa-solid fa-sort" style="color:var(--muted2)"></i> Display Order</label>
+          <input type="number" id="fOrder" placeholder="1 = first, 2 = second..."/>
+        </div>
+
+        <div class="fg">
+          <label><i class="fa-solid fa-certificate" style="color:var(--yellow)"></i> Badge Text</label>
+          <input type="text" id="fBadge" placeholder="e.g. HOT PACK" oninput="updateLivePreview()"/>
+        </div>
+        <div class="fg">
+          <label><i class="fa-solid fa-icons" style="color:var(--purple2)"></i> Badge Icon (FA class)</label>
+          <input type="text" id="fBadgeIcon" placeholder="fa-fire-flame-curved" oninput="updateLivePreview()"/>
+          <div class="fg-hint">e.g. fa-star, fa-bolt, fa-crown, fa-gem, fa-heart, fa-film</div>
+        </div>
+
+        <div class="fg">
+          <label><i class="fa-solid fa-indian-rupee-sign" style="color:var(--green)"></i> Price INR (₹)</label>
+          <input type="number" id="fPriceINR" placeholder="599" oninput="updateLivePreview()"/>
+        </div>
+        <div class="fg">
+          <label><i class="fa-solid fa-dollar-sign" style="color:var(--cyan)"></i> Price USD ($)</label>
+          <input type="number" id="fPriceUSD" placeholder="29" oninput="updateLivePreview()"/>
+        </div>
+
+        <div class="fg fg-full">
+          <label><i class="fa-solid fa-users" style="color:var(--purple2)"></i> Creators / Description</label>
+          <textarea id="fCreators" placeholder="Creator names and content description..."></textarea>
+        </div>
+        <div class="fg fg-full">
+          <label><i class="fa-solid fa-list-check" style="color:var(--green)"></i> Features (comma separated)</label>
+          <input type="text" id="fFeatures" placeholder="No link, Direct Videos, 24*7 Updates, Celebrity Content"/>
+        </div>
+        <div class="fg fg-full">
+          <label><i class="fa-solid fa-layer-group" style="color:var(--yellow)"></i> Platforms / What's Included</label>
+          <textarea id="fPlatforms" placeholder="Platform names and sources..."></textarea>
+        </div>
+
+        <!-- Image manager -->
+        <div class="fg fg-full">
+          <div class="modal-section-title"><i class="fa-solid fa-images" style="color:var(--pink)"></i> Image Manager</div>
+
+          <!-- UPLOAD NEW IMAGE/VIDEO via Supabase -->
+          <div id="uploadZone" style="border:2px dashed rgba(240,70,154,0.3);border-radius:12px;padding:20px;text-align:center;cursor:pointer;background:rgba(240,70,154,0.03);transition:all .2s;margin-bottom:14px;position:relative;">
+            <input type="file" id="uploadFileInput" accept="image/*,video/*" multiple style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;" onchange="handleUpload(this.files)"/>
+            <div id="uploadIdleState">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size:28px;color:var(--pink);margin-bottom:8px;display:block;"></i>
+              <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">Click or drag files here to upload</div>
+              <div style="font-size:11px;color:var(--muted);">Images (JPG/PNG/WEBP) + Videos (MP4/MOV) — max 50MB each</div>
+              <div style="font-size:10px;color:var(--cyan);margin-top:6px;font-weight:600;"><i class="fa-solid fa-bolt"></i> Powered by Supabase Storage</div>
+            </div>
+            <div id="uploadProgressState" style="display:none;">
+              <div class="spinner" style="margin:0 auto 10px;"></div>
+              <div id="uploadStatusText" style="font-size:13px;color:var(--muted2);font-weight:600;">Uploading...</div>
+              <div id="uploadProgressBar" style="height:4px;background:rgba(255,255,255,0.1);border-radius:4px;margin-top:10px;overflow:hidden;">
+                <div id="uploadProgressFill" style="height:100%;width:0%;background:var(--grad);border-radius:4px;transition:width .3s;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Selected -->
+          <div style="font-size:11px;color:var(--muted2);font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:7px;">
+            <i class="fa-solid fa-check-circle" style="color:var(--green)"></i> Selected Media <span id="selCountBadge" style="background:rgba(240,70,154,0.12);color:var(--pink);padding:2px 8px;border-radius:20px;font-size:10px;">0</span>
+          </div>
+          <div class="selected-imgs" id="selectedImgsStrip">
+            <div class="si-empty"><i class="fa-solid fa-circle-info"></i> Click images in the gallery below to select them</div>
+          </div>
+
+          <!-- Gallery picker -->
+          <div class="img-picker-box">
+            <div class="img-picker-head">
+              <span><i class="fa-solid fa-folder-open"></i> Available Media — Click to toggle</span>
+              <div class="img-picker-actions">
+                <button type="button" class="btn-sel-all" onclick="selectAllImages()"><i class="fa-solid fa-check-double"></i> All</button>
+                <button type="button" class="btn-clr-all" onclick="clearAllImages()"><i class="fa-solid fa-xmark"></i> Clear</button>
+              </div>
+            </div>
+            <div class="img-picker-grid" id="imageGalleryPicker"></div>
+          </div>
+
+          <!-- Manual input -->
+          <div style="margin-top:12px;">
+            <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:6px;"><i class="fa-solid fa-pen-to-square"></i> Or enter image paths manually (one per line):</div>
+            <textarea id="fImages" placeholder="images/1000070237.jpg&#10;images/1000070238.jpg" style="min-height:65px;font-family:monospace;font-size:12px;" oninput="syncImagesFromTextarea()"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-cancel" id="prodModalCancel">Cancel</button>
+      <button class="btn-save" id="prodModalSave"><i class="fa-solid fa-floppy-disk"></i> Save Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREENSHOT MODAL -->
+<div class="scr-modal-overlay" id="imgModal">
+  <div class="scr-modal-box">
+    <button class="scr-close" id="imgModalClose"><i class="fa-solid fa-xmark"></i></button>
+    <img id="imgModalImg" src="" alt="Payment Screenshot"/>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-global" id="globalToast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Saved!</span></div>
+
+<script type="module">
+// All privileged requests use the HttpOnly session cookie issued by admin-auth.
+async function adminApi(action, payload={}) {
+  const response = await fetch('/api/admin-api', { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'same-origin', body:JSON.stringify({action,...payload}) });
+  const result = await response.json().catch(()=>({}));
+  if (!response.ok) throw new Error(result.error || 'Request failed');
+  return result;
+}
+const db = null;
+const ref = (_db, path) => path;
+const snap = data => ({ exists:()=>data !== null && data !== undefined, val:()=>data });
+const get = async path => snap((await adminApi('read',{path})).data);
+const set = async (path, value) => {
+  if(path==='products') return adminApi('seed-products',{value});
+  if(path.startsWith('products/')) return adminApi('save-product',{value});
+  if(path==='settings/payment') return adminApi('save-payment-settings',{value});
+  throw new Error('Unsupported write');
+};
+const update = async (path, value) => { if(path.startsWith('orders/') && value.status==='done') return adminApi('mark-order-done',{key:path.split('/')[1]}); throw new Error('Unsupported update'); };
+const remove = async path => { if(path.startsWith('products/')) return adminApi('delete-product',{key:path.split('/')[1]}); throw new Error('Unsupported delete'); };
+
+// ── Helpers ──
+function msOf(d){const x=new Date();x.setHours(0,0,0,0);x.setDate(x.getDate()-d);return x.getTime();}
+function todayMs(){const x=new Date();x.setHours(0,0,0,0);return x.getTime();}
+function fmtTime(ts){if(!ts)return'—';const d=new Date(ts);return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});}
+function dayLabel(i){if(i===0)return'Today';const d=new Date();d.setDate(d.getDate()-i);return d.toLocaleDateString('en-IN',{weekday:'short'});}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function setRefreshed(t){const el=document.querySelector('#lastRefreshed');if(el)el.textContent=t;}
+function spinBtn(on){const b=document.getElementById('refreshTopBtn');b.classList.toggle('spinning',on);}
+
+// ── Toast ──
+function showToast(msg,isError=false){
+  const t=document.getElementById('globalToast');
+  document.getElementById('toastMsg').textContent=msg;
+  t.style.borderColor=isError?'rgba(239,68,68,0.3)':'rgba(34,197,94,0.3)';
+  t.style.color=isError?'#ff8080':'var(--green)';
+  t.querySelector('i').className=isError?'fa-solid fa-circle-exclamation':'fa-solid fa-circle-check';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── Visitors ──
+async function loadVisitors(){
+  spinBtn(true); setRefreshed('Refreshing...');
+  try{
+    const snap=await get(ref(db,'visitors'));
+    if(!snap.exists()){
+      ['countToday','count7','count30','countAvg'].forEach(id=>document.getElementById(id).textContent='0');
+      document.getElementById('navVisitorCount').textContent='0';
+      document.getElementById('chartBars').innerHTML='<div class="empty"><i class="fa-solid fa-chart-bar"></i><p>No visitor data yet</p></div>';
+      document.getElementById('tableWrap').innerHTML='<div class="empty"><i class="fa-solid fa-users"></i><p>No visitors recorded yet</p></div>';
+      setRefreshed('No data');spinBtn(false);return;
+    }
+    const raw=snap.val();
+    const records=Object.values(raw).map(v=>({ts:v.timestamp||0,page:v.page||'index',device:v.device||'—'})).sort((a,b)=>b.ts-a.ts);
+    const now30=msOf(30),now7=msOf(7),nowT=todayMs();
+    const r30=records.filter(v=>v.ts>=now30),r7=records.filter(v=>v.ts>=now7),rT=records.filter(v=>v.ts>=nowT);
+    document.getElementById('countToday').textContent=rT.length;
+    document.getElementById('count7').textContent=r7.length;
+    document.getElementById('count30').textContent=r30.length;
+    document.getElementById('countAvg').textContent=Math.round(r30.length/30)||0;
+    document.getElementById('navVisitorCount').textContent=records.length;
+    // Chart
+    const buckets={};
+    for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);d.setHours(0,0,0,0);buckets[d.toDateString()]=0;}
+    r7.forEach(v=>{const k=new Date(v.ts).toDateString();if(k in buckets)buckets[k]++;});
+    const entries=Object.entries(buckets);
+    const maxVal=Math.max(...entries.map(e=>e[1]),1);
+    const chartEl=document.getElementById('chartBars');
+    chartEl.innerHTML='';
+    entries.forEach(([,count],i)=>{
+      const pct=Math.max((count/maxVal)*100,3);
+      const lbl=dayLabel(6-i);
+      const col=document.createElement('div');col.className='bar-col';
+      col.innerHTML=`<div class="bar-fill" style="height:${pct}%"><div class="bar-tip">${count} visit${count!==1?'s':''}</div></div><div class="bar-label">${lbl}</div>`;
+      chartEl.appendChild(col);
+    });
+    // Table
+    const recent=records.slice(0,50);
+    const tw=document.getElementById('tableWrap');
+    if(!recent.length){tw.innerHTML='<div class="empty"><i class="fa-solid fa-users"></i><p>No visitors yet</p></div>';return;}
+    tw.innerHTML=`<table class="data-table"><thead><tr><th>#</th><th>Time</th><th>Page</th><th>Device</th></tr></thead><tbody>${recent.map((v,i)=>`<tr><td class="row-num">${i+1}</td><td class="time-cell">${fmtTime(v.ts)}</td><td><span class="pill ${v.page!=='index'?'purple':'pink'}">${v.page==='index'?'<i class="fa-solid fa-house"></i> Home':'<i class="fa-solid fa-credit-card"></i> Payment'}</span></td><td class="time-cell">${esc(v.device)}</td></tr>`).join('')}</tbody></table>`;
+    setRefreshed('Updated '+new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}));
+  }catch(e){setRefreshed('Error');document.getElementById('tableWrap').innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;opacity:1"></i><p style="color:#ef4444">${e.message}</p></div>`;}
+  spinBtn(false);
+}
+
+// ── Orders ──
+async function loadOrders(){
+  spinBtn(true);
+  document.getElementById('ordersTableWrap').innerHTML='<div class="spinner-wrap"><div class="spinner"></div><p>Fetching orders...</p></div>';
+  try{
+    const snap=await get(ref(db,'orders'));
+    if(!snap.exists()){
+      ['ordTotal','ordPending','ordDone','ordToday'].forEach(id=>document.getElementById(id).textContent='0');
+      document.getElementById('navOrderCount').textContent='0';
+      document.getElementById('ordersTableWrap').innerHTML='<div class="empty"><i class="fa-solid fa-bag-shopping"></i><p>No orders yet</p></div>';
+      spinBtn(false);return;
+    }
+    const raw=snap.val();
+    const orders=Object.entries(raw).map(([key,v])=>({key,ts:v.timestamp||0,package:v.package||'—',amount:v.amount||'—',method:v.method||'—',status:v.status||'pending',screenshotUrl:v.screenshotUrl||null})).sort((a,b)=>b.ts-a.ts);
+    const nowT=todayMs();
+    document.getElementById('ordTotal').textContent=orders.length;
+    document.getElementById('ordPending').textContent=orders.filter(o=>o.status==='pending').length;
+    document.getElementById('ordDone').textContent=orders.filter(o=>o.status==='done').length;
+    document.getElementById('ordToday').textContent=orders.filter(o=>o.ts>=nowT).length;
+    document.getElementById('navOrderCount').textContent=orders.length;
+    const tw=document.getElementById('ordersTableWrap');
+    tw.innerHTML=`<table class="data-table"><thead><tr><th>#</th><th>Time</th><th>Package</th><th>Amount</th><th>Method</th><th>Screenshot</th><th>Status</th></tr></thead><tbody>${orders.map((o,i)=>`<tr><td class="row-num">${i+1}</td><td class="time-cell">${fmtTime(o.ts)}</td><td class="pkg-cell">${esc(o.package)}</td><td class="amt-cell">${esc(o.amount)}</td><td class="time-cell">${esc(o.method)}</td><td>${o.screenshotUrl?`<a class="btn-view-img" href="${esc(o.screenshotUrl)}" target="_blank"><i class="fa-solid fa-image"></i> View</a>`:'<span style="color:var(--muted);font-size:12px">—</span>'}</td><td>${o.status==='done'?`<span class="pill green"><i class="fa-solid fa-circle-check"></i> Done</span>`:`<div style="display:flex;flex-direction:column;gap:6px"><span class="pill yellow"><i class="fa-solid fa-clock"></i> Pending</span><button class="btn-mark-done" data-key="${esc(o.key)}"><i class="fa-solid fa-check"></i> Mark Done</button></div>`}</td></tr>`).join('')}</tbody></table>`;
+    tw.querySelectorAll('.btn-mark-done').forEach(btn=>{
+      btn.addEventListener('click',async()=>{
+        const key=btn.dataset.key;
+        btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner" style="animation:spin .7s linear infinite"></i> Saving...';
+        try{await update(ref(db,'orders/'+key),{status:'done'});loadOrders();}
+        catch(e){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-check"></i> Mark Done';alert('Error: '+e.message);}
+      });
+    });
+  }catch(e){document.getElementById('ordersTableWrap').innerHTML=`<div class="empty"><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;opacity:1"></i><p style="color:#ef4444">${e.message}</p></div>`;}
+  spinBtn(false);
+}
+
+// ── Seed Products ──
+const SEED_PRODUCTS = [
+  {id:'p1',order:1,title:'MOM SON',badge:'ALL IN ONE',badgeIcon:'fa-layer-group',priceINR:599,priceUSD:39,creators:'Mom Son Leaks, Santoor Mom, Teen Son, Mom Son Relationship, Vansheen Verma, Rachel Sharma, Mallu Models & Many More',features:'No link,Direct Videos,24*7 Updates,Celebrity Content',platforms:'Des!, 121 TangoLive, Chamet, Uncut Webseries, OnlyFans, JoinMyApp (Everything Included)',images:'images/1000070237.jpg,images/1000070238.jpg,images/1000070239.jpg,images/1000070240.jpg,images/1000070241.jpg'},
+  {id:'p2',order:2,title:'SIS BRO',badge:'HOT PACK',badgeIcon:'fa-fire-flame-curved',priceINR:599,priceUSD:34,creators:'Brother Sister, Caught, 4k, Bro Sis Live, Indian, Viral bro sis, Teen bro sis & Many More',features:'No link,Direct Videos,24*7 Updates,Premium Content',platforms:'JoinMyApp, Fansa, Patreon, Paid App Contents, Exclusive Leaks (Everything Included)',images:'images/1000070246.jpg,images/1000070247.jpg,images/1000070248.jpg,images/1000070249.jpg,images/1000070250.jpg'},
+  {id:'p3',order:3,title:'RP VIDEOS',badge:'TOP RATED',badgeIcon:'fa-star',priceINR:699,priceUSD:35,creators:'Latest Videos, Most Viral Videos, Bhojpuri RP, Foreign RP, Trending RP, Best Quality RP & Many More',features:'No link,Direct Videos,24*7 Updates,High Quality',platforms:'Indian, Russian, Foreign, Hidden, 4K Quality, Exclusive Drops (Everything Included)',images:'images/1000070260.jpg,images/1000070261.jpg,images/1000070262.jpg,images/1000070263.jpg'},
+  {id:'p4',order:4,title:'TEEN VIDEOS',badge:'TEEN',badgeIcon:'fa-bolt',priceINR:599,priceUSD:30,creators:'College Teen Girls, Teen Boys, Indian Teens, Public Teens, Viral Teens & Many More',features:'No link,Direct Videos,24*7 Updates,HD Quality',platforms:'Classroom, Teen With Teacher, Teen Live, Uncut Teens (All Included)',images:'images/1000070267.jpg,images/1000070268.jpg,images/1000070269.jpg,images/1000070270.jpg'},
+  {id:'p5',order:5,title:'Hidden Camera Pack',badge:'HIDDEN CAMERA',badgeIcon:'fa-film',priceINR:599,priceUSD:31,creators:'Caught In 4K, Secret Videos, Celebrity Cam, Viral Cam Videos, Influencer Leak & Many More',features:'No link,Direct Videos,24*7 Updates,Leaks',platforms:'Viral, High Quality, Dark, Unexpected, Hot, Trending (Everything Included)',images:'images/1000070273.jpg,images/1000070274.jpg,images/1000070275.jpg,images/1000070276.jpg'},
+  {id:'p6',order:6,title:'Insta Influencer & Snapchat',badge:'Snap & Insta Leaks',badgeIcon:'fa-video',priceINR:499,priceUSD:28,creators:'Top Creators, Insta Influencer Leak, Live Leak, Without Clothes, Stripchat, LiveJasmin Performers & Many More',features:'No link,Direct Videos,24*7 Updates,Live Recordings',platforms:'Insta Models, Snapchat, Adult, Trending, Accidentally Leaked, LiveJasmin (All Included)',images:'images/1000070279.jpg,images/1000070280.jpg,images/1000070281.jpg,images/1000070282.jpg'},
+  {id:'p7',order:7,title:'Japanese Videos Pack',badge:'JAPANESE VIDEOS',badgeIcon:'fa-mobile-screen',priceINR:399,priceUSD:19,creators:'Japanese Models, Japanese Cutie, Japanese Exclusives, Boosty Stars & Many More',features:'No link,Direct Videos,24*7 Updates,App Exclusives',platforms:'Japanese On Road, Japanese Girl, Japanese Model, Japanese 4K, Boosty (Everything Included)',images:'images/1000070237.jpg,images/1000070240.jpg,images/1000070243.jpg,images/1000070246.jpg'},
+  {id:'p8',order:8,title:'Animal Girl',badge:'ANIMAL WITH GIRL',badgeIcon:'fa-heart',priceINR:499,priceUSD:17,creators:'Animal With Aunties, Animal Series, Animal With Housewife, Live Animal, Girl With Dog & Many More',features:'No link,Direct Videos,24*7 Updates,Animal Originals',platforms:'Desi, Hot Girl, Young Girl With Horse, Girl And Dog, MoodX, BullApp (Everything Included)',images:'images/1000070249.jpg,images/1000070252.jpg,images/1000070255.jpg,images/1000070258.jpg'},
+  {id:'p9',order:9,title:'GAY Collection',badge:'GAY PACK',badgeIcon:'fa-gem',priceINR:399,priceUSD:16,creators:'Muscular Gay, Gay Actor, Retro Bollywood Gays, Old Gold Creators, Vintage Leaks & Many More',features:'No link,Direct Videos,24*7 Updates,Classic Content',platforms:'Archive Leaks, Old Platforms, Classic Desi, Vintage Streams, Retro Collections (All Included)',images:'images/1000070261.jpg,images/1000070264.jpg,images/1000070267.jpg,images/1000070270.jpg'},
+  {id:'p10',order:10,title:'Indian Pack',badge:'INDIAN DESI PACK',badgeIcon:'fa-indian-rupee-sign',priceINR:399,priceUSD:14,creators:'New Bhabhi, Rising Stars, Up & Coming Models, Fresh Content Makers, Viral Shorts Creators & Many More',features:'No link,Direct Videos,24*7 Updates,Fresh Content',platforms:'Telegram Exclusives, Instagram Leaks, YouTube Privates, Shorts Collections (All Included)',images:'images/1000070273.jpg,images/1000070276.jpg,images/1000070279.jpg,images/1000070282.jpg'},
+  {id:'p11',order:11,title:'Tamil Mallu Premium Pack',badge:'TAMIL MALLU',badgeIcon:'fa-crown',priceINR:799,priceUSD:153,creators:'30,000+ Videos | Top Creators, Mallu Premium, Tamilian Leaks, South Indian Stars & Many More',features:'No link,Direct Videos,24*7 Updates,Ultra 4K Quality',platforms:'Mallu Aunty, South Premium, South VIP, South Indian Elite (Everything Included)',images:'images/1000070285.jpg,images/1000070238.jpg,images/1000070241.jpg,images/1000070244.jpg'},
+  {id:'p12',order:12,title:'Hot College Girls Pack',badge:'COLLEGE GIRLS',badgeIcon:'fa-clapperboard',priceINR:599,priceUSD:27,creators:'College Originals, College Girls Exclusives, NeonX Series, PrimeShots, HotShots & Many More',features:'No link,Direct Videos,24*7 Updates,Top Quality Videos',platforms:'Girls With Boyfriend In College, In Classroom, Girl With Maths Sir, GupChup (All Included)',images:'images/1000070247.jpg,images/1000070250.jpg,images/1000070253.jpg,images/1000070256.jpg'},
+  {id:'p13',order:13,title:'Chinese Top Quality',badge:'Chinese Videos Pack',badgeIcon:'fa-photo-film',priceINR:499,priceUSD:14,creators:'Chinese Models, Photo Sets, Bikini Shoots, Boudoir Collections, High-Res Galleries & Many More',features:'No link,Direct Files,24*7 Updates,HD Photos + Videos',platforms:'Chinese Privates, Hot Chinese Girl Photos, Chinese Sets, Sexy Photos (All Included)',images:'images/1000070259.jpg,images/1000070262.jpg,images/1000070265.jpg,images/1000070268.jpg'},
+];
+
+// ── Products ──
+async function loadProducts(){
+  const grid=document.getElementById('prodGrid');
+  grid.innerHTML='<div class="spinner-wrap" style="grid-column:1/-1"><div class="spinner"></div><p>Loading categories...</p></div>';
+  try{
+    const snap=await get(ref(db,'products'));
+    let products=[];
+    if(snap.exists()) products=Object.values(snap.val());
+    products.sort((a,b)=>(a.order||0)-(b.order||0));
+    document.getElementById('navProductCount').textContent=products.length;
+    renderProdGrid(products);
+  }catch(e){
+    grid.innerHTML=`<div class="empty" style="grid-column:1/-1"><i class="fa-solid fa-triangle-exclamation" style="color:#ef4444;opacity:1"></i><p style="color:#ef4444">${e.message}</p></div>`;
+  }
+}
+
+// ── Download ZIP ──
+async function downloadProductZip(product) {
+  const btn = document.querySelector(`.btn-zip[data-id="${product.id}"]`);
+  if (btn) { btn.classList.add('loading'); btn.innerHTML = '<i class="fa-solid fa-spinner" style="animation:spin .7s linear infinite"></i> Zipping...'; }
+
+  try {
+    const zip = new JSZip();
+    const mediaUrls = (product.images || '').split(',').map(s => s.trim()).filter(Boolean);
+
+    if (!mediaUrls.length) {
+      showToast('No media to download.', true);
+      return;
+    }
+
+    const fetchPromises = mediaUrls.map(async (url, idx) => {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const blob = await response.blob();
+        // derive filename from url
+        const filename = url.split('/').pop().split('?')[0] || `file_${idx+1}`;
+        zip.file(filename, blob);
+      } catch (err) {
+        console.warn('Failed to fetch:', url, err);
+        // still add a placeholder? skip
+      }
+    });
+
+    await Promise.allSettled(fetchPromises);
+
+    const zipBlob = await zip.generateAsync({ type: 'blob' });
+    // use product title as zip name
+    const safeTitle = (product.title || 'category').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const link=document.createElement('a'); link.href=URL.createObjectURL(zipBlob); link.download=`${safeTitle}.zip`; link.click(); setTimeout(()=>URL.revokeObjectURL(link.href),1000);
+    showToast(`✅ Downloaded ${mediaUrls.length} files as ZIP`);
+  } catch (err) {
+    showToast('Error creating ZIP: ' + err.message, true);
+  } finally {
+    if (btn) { btn.classList.remove('loading'); btn.innerHTML = '<i class="fa-solid fa-file-zipper"></i> ZIP'; }
+  }
+}
+
+function renderProdGrid(products){
+  const grid=document.getElementById('prodGrid');
+  if(!products.length){
+    grid.innerHTML='<div class="empty" style="grid-column:1/-1"><i class="fa-solid fa-boxes-stacked"></i><p>No categories yet. Click "Add Category" to start.</p></div>';
+    return;
+  }
+  grid.innerHTML=products.map(p=>{
+    const imgs=(p.images||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const thumb=imgs[0]||'';
+    const thumbIsVid=thumb&&/\.(mp4|mov|webm|avi)(\?|$)/i.test(thumb);
+    return `<div class="prod-card" data-id="${esc(p.id)}">
+      <div class="prod-thumb">
+        ${thumb
+          ? thumbIsVid
+            ? `<video src="${esc(thumb)}" style="width:100%;height:100%;object-fit:cover;" muted preload="metadata"></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);"><i class="fa-solid fa-play" style="color:#fff;font-size:22px;"></i></div>`
+            : `<img src="${esc(thumb)}" alt="${esc(p.title)}" onerror="this.style.opacity=0.15"/>`
+          : '<div class="prod-thumb-ph"><i class="fa-solid fa-image"></i></div>'}
+        <div class="prod-order-tag"># ${p.order||'—'}</div>
+        <div class="prod-img-count"><i class="fa-solid fa-photo-film"></i> ${imgs.length}</div>
+      </div>
+      <div class="prod-body">
+        <div class="prod-name">${esc(p.title)}</div>
+        <div class="prod-badge-row">
+          <span class="prod-badge"><i class="fa-solid ${esc(p.badgeIcon||'fa-tag')}"></i> ${esc(p.badge||'')}</span>
+        </div>
+        <div class="prod-prices">
+          <div class="price-chip"><div class="lbl">INR</div><div class="val">₹${p.priceINR||0}</div></div>
+          <div class="price-chip"><div class="lbl">USD</div><div class="val">$${p.priceUSD||0}</div></div>
+        </div>
+        <div class="prod-actions">
+          <button class="btn-edit" data-id="${esc(p.id)}"><i class="fa-solid fa-pen"></i> Edit</button>
+          <button class="btn-zip" data-id="${esc(p.id)}" title="Download all media as ZIP"><i class="fa-solid fa-file-zipper"></i> ZIP</button>
+          <button class="btn-del" data-id="${esc(p.id)}" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  grid.querySelectorAll('.btn-edit').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      const snap2=await get(ref(db,'products/'+btn.dataset.id));
+      if(snap2.exists())openProdModal(snap2.val());
+    });
+  });
+  grid.querySelectorAll('.btn-del').forEach(btn=>{
+    btn.addEventListener('click',async()=>{
+      if(!confirm('Delete this category permanently?'))return;
+      btn.innerHTML='<i class="fa-solid fa-spinner" style="animation:spin .7s linear infinite"></i>';
+      btn.disabled=true;
+      try{await remove(ref(db,'products/'+btn.dataset.id));showToast('Category deleted!');loadProducts();}
+      catch(e){showToast('Error: '+e.message,true);btn.disabled=false;}
+    });
+  });
+  grid.querySelectorAll('.btn-zip').forEach(btn=>{
+    btn.addEventListener('click',async (e)=>{
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const snap = await get(ref(db,'products/'+id));
+      if(snap.exists()) {
+        downloadProductZip(snap.val());
+      } else {
+        showToast('Product not found', true);
+      }
+    });
+  });
+}
+
+// ── Supabase Storage Upload ──
+async function uploadToSupabase(file) {
+  const res  = await fetch('/api/admin-upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': file.type,
+      'x-file-name': file.name.replace(/[^A-Za-z0-9._-]/g, '_')
+    },
+    credentials:'same-origin', body: file
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  return (await res.json()).url;
+}
+
+window.handleUpload = async function(files) {
+  if (!files || !files.length) return;
+  const idle     = document.getElementById('uploadIdleState');
+  const prog     = document.getElementById('uploadProgressState');
+  const stTxt    = document.getElementById('uploadStatusText');
+  const progFill = document.getElementById('uploadProgressFill');
+  idle.style.display = 'none';
+  prog.style.display = 'block';
+
+  const total    = files.length;
+  const uploaded = [];
+
+  for (let i = 0; i < total; i++) {
+    const file = files[i];
+    if (file.size > 50 * 1024 * 1024) {
+      showToast(`${file.name} too large — max 50MB`, true);
+      continue;
+    }
+    stTxt.textContent = `Uploading ${i+1} of ${total}: ${file.name}`;
+    if (progFill) progFill.style.width = Math.round(((i)/total)*100) + '%';
+    try {
+      const url = await uploadToSupabase(file);
+      uploaded.push(url);
+    } catch(e) {
+      showToast(`Failed: ${file.name} — ${e.message}`, true);
+    }
+  }
+  if (progFill) progFill.style.width = '100%';
+
+  setTimeout(() => {
+    idle.style.display = 'block';
+    prog.style.display = 'none';
+    document.getElementById('uploadFileInput').value = '';
+    if (progFill) progFill.style.width = '0%';
+  }, 400);
+
+  if (uploaded.length) {
+    uploaded.forEach(url => { if (!uploadedMediaList.includes(url)) uploadedMediaList.push(url); });
+    uploaded.forEach(url => { if (!selectedImages.includes(url)) selectedImages.push(url); });
+    buildImageGallery();
+    syncGallery();
+    renderStrip();
+    syncTA();
+    updateLivePreview();
+    showToast(`✅ ${uploaded.length} file${uploaded.length>1?'s':''} uploaded!`);
+  }
+};
+
+// Drag-over highlight
+document.addEventListener('DOMContentLoaded', () => {
+  const zone = document.getElementById('uploadZone');
+  if (!zone) return;
+  zone.addEventListener('dragover',  e => { e.preventDefault(); zone.style.borderColor='var(--pink)';zone.style.background='rgba(240,70,154,0.07)'; });
+  zone.addEventListener('dragleave', () => { zone.style.borderColor='rgba(240,70,154,0.3)';zone.style.background='rgba(240,70,154,0.03)'; });
+  zone.addEventListener('drop',      e => { e.preventDefault(); zone.style.borderColor='rgba(240,70,154,0.3)';zone.style.background='rgba(240,70,154,0.03)'; handleUpload(e.dataTransfer.files); });
+});
+
+// ── Image Manager ──
+const ALL_IMAGES=Array.from({length:49},(_,i)=>'images/'+(1000070237+i)+'.jpg');
+let selectedImages=[];
+let uploadedMediaList=[];
+
+function buildImageGallery(){
+  const picker=document.getElementById('imageGalleryPicker');
+  picker.innerHTML='';
+
+  const allMedia=[...uploadedMediaList,...ALL_IMAGES];
+
+  allMedia.forEach(src=>{
+    const isVid=/\.(mp4|mov|webm|avi)(\?|$)/i.test(src);
+    const btn=document.createElement('button');
+    btn.type='button';btn.className='gib';btn.dataset.src=src;
+    if(isVid){
+      btn.innerHTML=`
+        <video src="${esc(src)}" style="width:100%;height:100%;object-fit:cover;" muted preload="metadata"></video>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);pointer-events:none;">
+          <i class="fa-solid fa-play" style="color:#fff;font-size:14px;"></i>
+        </div>
+        <div class="gib-ck"><i class="fa-solid fa-check"></i></div>`;
+    }else{
+      btn.innerHTML=`<img src="${esc(src)}" loading="lazy" onerror="this.parentElement.style.opacity=0.25"/><div class="gib-ck"><i class="fa-solid fa-check"></i></div>`;
+    }
+    btn.addEventListener('click',()=>toggleImg(src));
+    picker.appendChild(btn);
+  });
+
+  const galleryHead=document.querySelector('.img-picker-head span');
+  const vidCount=uploadedMediaList.filter(s=>/\.(mp4|mov|webm|avi)(\?|$)/i.test(s)).length;
+  const imgCount=uploadedMediaList.filter(s=>!/\.(mp4|mov|webm|avi)(\?|$)/i.test(s)).length;
+  if(galleryHead){
+    let extra='';
+    if(uploadedMediaList.length>0){
+      extra=` <span style="color:var(--cyan);font-size:10px;margin-left:4px;">(+${imgCount>0?imgCount+' img':''}${imgCount>0&&vidCount>0?' + ':''}${vidCount>0?vidCount+' vid':''}  uploaded)</span>`;
+    }
+    galleryHead.innerHTML=`<i class="fa-solid fa-folder-open"></i> Available Media — Click to toggle${extra}`;
+  }
+}
+function toggleImg(src){
+  const idx=selectedImages.indexOf(src);
+  if(idx===-1)selectedImages.push(src);else selectedImages.splice(idx,1);
+  syncGallery();renderStrip();syncTA();updateLivePreview();
+}
+function syncGallery(){
+  document.querySelectorAll('.gib').forEach(btn=>btn.classList.toggle('selected',selectedImages.includes(btn.dataset.src)));
+}
+function renderStrip(){
+  const strip=document.getElementById('selectedImgsStrip');
+  const badge=document.getElementById('selCountBadge');
+  if(badge)badge.textContent=selectedImages.length;
+  if(!selectedImages.length){
+    strip.innerHTML='<div class="si-empty"><i class="fa-solid fa-circle-info"></i> Click images in the gallery below to select them</div>';
+    return;
+  }
+  strip.innerHTML=selectedImages.map((src,i)=>{
+    const isVid=/\.(mp4|mov|webm|avi)(\?|$)/i.test(src);
+    const media=isVid
+      ? `<video src="${esc(src)}" style="width:100%;height:100%;object-fit:cover;" muted></video><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);"><i class="fa-solid fa-play" style="color:#fff;font-size:16px;"></i></div>`
+      : `<img src="${esc(src)}" onerror="this.style.opacity=0.2"/>`;
+    return `<div class="si-item">${media}<span class="si-num">${i+1}</span><button class="si-del" type="button" onclick="removeImg('${esc(src)}')" title="Remove"><i class="fa-solid fa-xmark"></i></button></div>`;
+  }).join('');
+  updateThumb();
+}
+function updateThumb(){
+  const img=document.getElementById('lpThumbImg'),ph=document.getElementById('lpThumbPh');
+  if(selectedImages[0]){
+    const src=selectedImages[0];
+    if(src.startsWith('db://')){
+      const key=src.replace('db://','');
+      get(ref(db,'uploads/'+key)).then(snap=>{
+        if(snap.exists()){img.src=snap.val().data;img.style.display='block';ph.style.display='none';}
+      }).catch(()=>{});
+    } else {
+      img.src=src;img.style.display='block';ph.style.display='none';
+    }
+  } else {img.style.display='none';ph.style.display='flex';}
+}
+window.removeImg=function(src){selectedImages=selectedImages.filter(s=>s!==src);syncGallery();renderStrip();syncTA();updateLivePreview();};
+function syncTA(){document.getElementById('fImages').value=selectedImages.join('\n');}
+window.syncImagesFromTextarea=function(){
+  selectedImages=document.getElementById('fImages').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  syncGallery();renderStrip();updateLivePreview();
+};
+window.selectAllImages=function(){selectedImages=[...uploadedMediaList,...ALL_IMAGES].filter((v,i,a)=>a.indexOf(v)===i);syncGallery();renderStrip();syncTA();updateLivePreview();};
+window.clearAllImages=function(){selectedImages=[];syncGallery();renderStrip();syncTA();updateLivePreview();};
+
+// ── Live Preview ──
+window.updateLivePreview=function(){
+  const title=document.getElementById('fTitle').value.trim()||'Category Name';
+  const badge=document.getElementById('fBadge').value.trim()||'BADGE';
+  const icon=document.getElementById('fBadgeIcon').value.trim()||'fa-tag';
+  const inr=document.getElementById('fPriceINR').value||'0';
+  const usd=document.getElementById('fPriceUSD').value||'0';
+  document.getElementById('lpTitle').textContent=title;
+  document.getElementById('lpBadgeTxt').textContent=badge;
+  document.getElementById('lpIcon').className='fa-solid '+icon;
+  document.getElementById('lpPriceINR').textContent='₹'+inr;
+  document.getElementById('lpPriceUSD').textContent='$'+usd;
+  updateThumb();
+};
+
+// ── Modal ──
+let editingProdId=null;
+function openProdModal(prod=null){
+  editingProdId=prod?prod.id:null;
+  document.getElementById('prodModalTitle').textContent=prod?'Edit Category':'Add Category';
+  document.getElementById('editProdId').value=prod?.id||'';
+  document.getElementById('fTitle').value=prod?.title||'';
+  document.getElementById('fBadge').value=prod?.badge||'';
+  document.getElementById('fBadgeIcon').value=prod?.badgeIcon||'fa-tag';
+  document.getElementById('fPriceINR').value=prod?.priceINR||'';
+  document.getElementById('fPriceUSD').value=prod?.priceUSD||'';
+  document.getElementById('fCreators').value=prod?.creators||'';
+  document.getElementById('fFeatures').value=prod?.features||'';
+  document.getElementById('fPlatforms').value=prod?.platforms||'';
+  document.getElementById('fOrder').value=prod?.order||'';
+  selectedImages=(prod?.images||'').split(',').map(s=>s.trim()).filter(Boolean);
+  document.getElementById('fImages').value=selectedImages.join('\n');
+  buildImageGallery();syncGallery();renderStrip();updateLivePreview();
+  document.getElementById('prodModal').classList.add('open');
+  setTimeout(()=>{const mb=document.querySelector('#prodModal .modal-box');if(mb)mb.scrollTop=0;},50);
+}
+function closeProdModal(){document.getElementById('prodModal').classList.remove('open');}
+
+document.getElementById('btnAddProd').addEventListener('click',()=>openProdModal());
+document.getElementById('prodModalClose').addEventListener('click',closeProdModal);
+document.getElementById('prodModalCancel').addEventListener('click',closeProdModal);
+document.getElementById('prodModal').addEventListener('click',e=>{if(e.target===document.getElementById('prodModal'))closeProdModal();});
+
+document.getElementById('prodModalSave').addEventListener('click',async()=>{
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title){showToast('Category name is required!',true);return;}
+  const saveBtn=document.getElementById('prodModalSave');
+  saveBtn.disabled=true;saveBtn.innerHTML='<i class="fa-solid fa-spinner" style="animation:spin .7s linear infinite"></i> Saving...';
+  const finalImgs=selectedImages.length?selectedImages:document.getElementById('fImages').value.split('\n').map(s=>s.trim()).filter(Boolean);
+  const id=editingProdId||('p_'+Date.now());
+  const prod={id,title,
+    badge:document.getElementById('fBadge').value.trim(),
+    badgeIcon:document.getElementById('fBadgeIcon').value.trim()||'fa-tag',
+    priceINR:Number(document.getElementById('fPriceINR').value)||0,
+    priceUSD:Number(document.getElementById('fPriceUSD').value)||0,
+    creators:document.getElementById('fCreators').value.trim(),
+    features:document.getElementById('fFeatures').value.trim(),
+    platforms:document.getElementById('fPlatforms').value.trim(),
+    order:Number(document.getElementById('fOrder').value)||99,
+    images:finalImgs.join(','),
+  };
+  try{
+    await set(ref(db,'products/'+id),prod);
+    showToast(editingProdId?'Category updated!':'Category added!');
+    closeProdModal();loadProducts();
+  }catch(e){showToast('Error: '+e.message,true);}
+  saveBtn.disabled=false;saveBtn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save Category';
+});
+
+// ── Payment Settings ──
+async function loadPaymentSettings(){
+  const fields=['upiId','telegramUrl','bep20Address','trxAddress','ethAddress','paypalLink','binanceId','binanceGiftCardUrl'];
+  try{
+    const snap=await get(ref(db,'settings/payment'));
+    const d=snap.exists()?snap.val():{};
+    const defaults={
+      upiId:'BHARATPE2N0I0J1J5O45879@unitype',
+      telegramUrl:'https://t.me/Saymyn_ame',
+      bep20Address:'bc1q5j54x6pg7jhyta7lkkcg8ytfmnnputr3pufenm',
+      ethAddress:'0xAEE42CCf31Ab1E4D6D2b33D57A3c3DEafd9cB414',
+      binanceId:'969887942',
+      binanceGiftCardUrl:'https://www.g2a.com/binance-gift-card-205-usdt-key-i10000337768061',
+      paypalLink:'https://www.paypal.me/axisticexchange',
+      trxAddress:'TSpgNdhp1NSCv8b6PCc7e5b1dSh6sgtRs9',
+    };
+    fields.forEach(f=>{
+      const el=document.getElementById('ps_'+f);
+      if(el) el.value=d[f]||defaults[f]||'';
+    });
+  }catch(e){showToast('Error loading settings: '+e.message,true);}
+}
+
+window.savePaymentSettings=async function(){
+  const btn=document.getElementById('btnSavePayment');
+  btn.disabled=true;btn.innerHTML='<i class="fa-solid fa-spinner" style="animation:spin .7s linear infinite"></i> Saving...';
+  const fields=['upiId','telegramUrl','bep20Address','trxAddress','ethAddress','paypalLink','binanceId','binanceGiftCardUrl'];
+  const data={};
+  fields.forEach(f=>{
+    const el=document.getElementById('ps_'+f);
+    if(el&&el.value.trim()) data[f]=el.value.trim();
+  });
+  try{
+    await set(ref(db,'settings/payment'),data);
+    showToast('✅ Payment settings saved! Live on payment page.');
+  }catch(e){showToast('Error: '+e.message,true);}
+  btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-floppy-disk"></i> Save All Changes';
+};
+let activeTab='analytics';
+function switchTab(tab){
+  activeTab=tab;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.tab===tab));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  const titles={analytics:'<span>Visitors</span> Analytics',orders:'<span>Orders</span> Management',products:'<span>Category</span> Manager','payment-settings':'<span>Payment</span> Settings'};
+  document.getElementById('pageTitle').innerHTML=titles[tab]||tab;
+  if(tab==='orders')loadOrders();
+  else if(tab==='products')loadProducts();
+  else if(tab==='payment-settings')loadPaymentSettings();
+  else loadVisitors();
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+document.querySelectorAll('.nav-item').forEach(btn=>btn.addEventListener('click',()=>switchTab(btn.dataset.tab)));
+document.getElementById('mobileMenuBtn').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+});
+document.getElementById('sidebarOverlay').addEventListener('click',()=>{
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+});
+
+// ── Login / Logout ──
+async function showDashboardIfAuthenticated(){
+  try { const response=await fetch('/api/admin-auth',{credentials:'same-origin'}); const result=await response.json(); if(result.authenticated){ document.getElementById('loginScreen').style.display='none'; document.getElementById('dashboard').style.display='block'; loadVisitors(); } } catch(_) {}
+}
+document.getElementById('loginBtn').addEventListener('click',async()=>{
+  const id=document.getElementById('loginId').value.trim();
+  const pass=document.getElementById('loginPass').value.trim();
+  try{
+    const response=await fetch('/api/admin-auth',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({username:id,password:pass})});
+    if(!response.ok) throw new Error('Invalid credentials');
+    document.getElementById('loginScreen').style.display='none';
+    document.getElementById('dashboard').style.display='block';
+    loadVisitors();
+  }catch(_){
+    const err=document.getElementById('loginErr');
+    err.style.display='block';
+    setTimeout(()=>err.style.display='none',3000);
+  }
+});
+document.getElementById('logoutBtn').addEventListener('click',()=>{
+  fetch('/api/admin-auth',{method:'DELETE',credentials:'same-origin'});
+  document.getElementById('dashboard').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginId').value='';
+  document.getElementById('loginPass').value='';
+});
+showDashboardIfAuthenticated();
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')
+    document.getElementById('loginBtn').click();
+});
+
+// ── Refresh ──
+document.getElementById('refreshTopBtn').addEventListener('click',()=>{
+  if(activeTab==='orders')loadOrders();
+  else if(activeTab==='products')loadProducts();
+  else loadVisitors();
+});
+
+// ── Screenshot Modal ──
+const imgModal=document.getElementById('imgModal');
+const imgModalImg=document.getElementById('imgModalImg');
+document.getElementById('imgModalClose').addEventListener('click',()=>imgModal.classList.remove('open'));
+imgModal.addEventListener('click',e=>{if(e.target===imgModal)imgModal.classList.remove('open');});
+document.getElementById('tab-orders').addEventListener('click',e=>{
+  const btn=e.target.closest('.btn-view-img');
+  if(!btn)return;
+  const href=btn.getAttribute('href');
+  if(href&&!href.startsWith('http')){e.preventDefault();imgModalImg.src=href;imgModal.classList.add('open');}
+});
+
+// ── Auto Refresh ──
+setInterval(()=>{
+  if(document.getElementById('dashboard').style.display!=='none'){
+    if(activeTab==='orders')loadOrders();
+    else if(activeTab==='analytics')loadVisitors();
+  }
+},60000);
+</script>
+</body>
+</html>
