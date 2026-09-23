@@ -186,41 +186,138 @@ async function handleAdminAuth(request, env) {
   }
 }
 
+// async function handleAdminApi(request, env) {
+//   if (!(await isAdmin(request, env))) return json(401, { error: 'Authentication required' });
+//   if (request.method !== 'POST' || !sameOrigin(request)) return json(403, { error: 'Forbidden' });
+//   try {
+//     const { action, path, value, key } = await readJson(request);
+//     if (action === 'read' && (new Set(['visitors', 'orders', 'products', 'settings/payment'])).has(path)) {
+//       const data = await firebaseRequest(env, path);
+//       if (path === 'orders' && data) {
+//         for (const order of Object.values(data)) {
+//           if (order.screenshotPath) order.screenshotUrl = `/api/admin-media?path=${encodeURIComponent(order.screenshotPath)}`;
+//           delete order.screenshotPath;
+//         }
+//       }
+//       return json(200, { data: data || null });
+//     }
+//     if (action === 'read' && /^products\/[A-Za-z0-9_-]+$/.test(path)) return json(200, { data: await firebaseRequest(env, path) });
+//     if (action === 'save-product' && value && /^[A-Za-z0-9_-]+$/.test(value.id)) {
+//       const product = Object.fromEntries(PRODUCT_FIELDS.filter(field => field in value).map(field => [field, value[field]]));
+//       await firebaseRequest(env, `products/${value.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(product) });
+//       return json(200, { ok: true });
+//     }
+//     if (action === 'delete-product' && /^[A-Za-z0-9_-]+$/.test(key)) {
+//       await firebaseRequest(env, `products/${key}`, { method: 'DELETE' });
+//       return json(200, { ok: true });
+//     }
+//     if (action === 'save-payment-settings' && value && typeof value === 'object') {
+//       await firebaseRequest(env, 'settings/payment', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
+//       return json(200, { ok: true });
+//     }
+//     return json(400, { error: 'Unsupported operation' });
+//   } catch {
+//     console.error('ADMIN API ERROR:', error);
+//     return json(500, { error: 'Request failed' });
+//   }
+// }
+
 async function handleAdminApi(request, env) {
-  if (!(await isAdmin(request, env))) return json(401, { error: 'Authentication required' });
-  if (request.method !== 'POST' || !sameOrigin(request)) return json(403, { error: 'Forbidden' });
   try {
-    const { action, path, value, key } = await readJson(request);
+    console.log('ADMIN API: request received');
+
+    const admin = await isAdmin(request, env);
+    console.log('ADMIN API: isAdmin =', admin);
+
+    if (!admin) {
+      return json(401, { error: 'Authentication required' });
+    }
+
+    if (request.method !== 'POST' || !sameOrigin(request)) {
+      return json(403, { error: 'Forbidden' });
+    }
+
+    const body = await readJson(request);
+    console.log('ADMIN API: body received', {
+      action: body.action,
+      path: body.path
+    });
+
+    const { action, path, value, key } = body;
+
     if (action === 'read' && (new Set(['visitors', 'orders', 'products', 'settings/payment'])).has(path)) {
+      console.log('ADMIN API: Firebase read', path);
+
       const data = await firebaseRequest(env, path);
+
+      console.log('ADMIN API: Firebase read successful');
+
       if (path === 'orders' && data) {
         for (const order of Object.values(data)) {
-          if (order.screenshotPath) order.screenshotUrl = `/api/admin-media?path=${encodeURIComponent(order.screenshotPath)}`;
+          if (order.screenshotPath) {
+            order.screenshotUrl = `/api/admin-media?path=${encodeURIComponent(order.screenshotPath)}`;
+          }
           delete order.screenshotPath;
         }
       }
+
       return json(200, { data: data || null });
     }
-    if (action === 'read' && /^products\/[A-Za-z0-9_-]+$/.test(path)) return json(200, { data: await firebaseRequest(env, path) });
+
+    if (action === 'read' && /^products\/[A-Za-z0-9_-]+$/.test(path)) {
+      const data = await firebaseRequest(env, path);
+      return json(200, { data });
+    }
+
     if (action === 'save-product' && value && /^[A-Za-z0-9_-]+$/.test(value.id)) {
-      const product = Object.fromEntries(PRODUCT_FIELDS.filter(field => field in value).map(field => [field, value[field]]));
-      await firebaseRequest(env, `products/${value.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(product) });
+      const product = Object.fromEntries(
+        PRODUCT_FIELDS
+          .filter(field => field in value)
+          .map(field => [field, value[field]])
+      );
+
+      await firebaseRequest(env, `products/${value.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(product)
+      });
+
       return json(200, { ok: true });
     }
+
     if (action === 'delete-product' && /^[A-Za-z0-9_-]+$/.test(key)) {
-      await firebaseRequest(env, `products/${key}`, { method: 'DELETE' });
+      await firebaseRequest(env, `products/${key}`, {
+        method: 'DELETE'
+      });
+
       return json(200, { ok: true });
     }
+
     if (action === 'save-payment-settings' && value && typeof value === 'object') {
-      await firebaseRequest(env, 'settings/payment', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
+      await firebaseRequest(env, 'settings/payment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(value)
+      });
+
       return json(200, { ok: true });
     }
+
     return json(400, { error: 'Unsupported operation' });
-  } catch {
-    console.error('ADMIN API ERROR:', error);
-    return json(500, { error: 'Request failed' });
+
+  } catch (error) {
+    console.error('ADMIN API EXCEPTION:', error?.stack || error?.message || String(error));
+
+    return json(500, {
+      error: 'Request failed',
+      debug: error?.message || String(error)
+    });
   }
 }
+
+
+
+
 
 async function handleAdminUpload(request, env) {
   if (!(await isAdmin(request, env))) return json(401, { error: 'Authentication required' });
