@@ -217,6 +217,7 @@ async function handleAdminApi(request, env) {
     }
     return json(400, { error: 'Unsupported operation' });
   } catch {
+    console.error('ADMIN API ERROR:', error);
     return json(500, { error: 'Request failed' });
   }
 }
